@@ -2,8 +2,8 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { marked } from "marked";
 
 const outputDir = new URL("../dist/", import.meta.url);
-const articleDir = new URL("./articles/bus-matrix/", outputDir);
-const sourceFile = new URL("../总线矩阵.md", import.meta.url);
+const sourceFile = new URL("../content/posts/bus-matrix/bus-matrix.md", import.meta.url);
+const sourceImagesDir = new URL("../content/posts/bus-matrix/images/", import.meta.url);
 
 marked.use({
   gfm: true,
@@ -13,6 +13,30 @@ marked.use({
 
 const escapeHtml = (value) =>
   value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+
+const parseFrontMatter = (source) => {
+  const match = source.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---\r?\n/);
+  if (!match) throw new Error("Article is missing front matter.");
+
+  const data = {};
+  for (const line of match[1].split(/\r?\n/)) {
+    const separator = line.indexOf(":");
+    if (separator === -1) continue;
+    const key = line.slice(0, separator).trim();
+    const rawValue = line.slice(separator + 1).trim();
+    if (rawValue.startsWith('"') && rawValue.endsWith('"')) {
+      data[key] = JSON.parse(rawValue);
+    } else if (rawValue.startsWith("[") && rawValue.endsWith("]")) {
+      data[key] = rawValue.slice(1, -1).split(",").map((item) => item.trim());
+    } else if (rawValue === "true" || rawValue === "false") {
+      data[key] = rawValue === "true";
+    } else {
+      data[key] = rawValue;
+    }
+  }
+
+  return { data, content: source.slice(match[0].length) };
+};
 
 const slugify = (value) => {
   const slug = value
@@ -24,7 +48,13 @@ const slugify = (value) => {
   return slug || "section";
 };
 
-const markdown = await readFile(sourceFile, "utf8");
+const source = await readFile(sourceFile, "utf8");
+const { data: metadata, content: markdown } = parseFrontMatter(source);
+const articleDir = new URL(`./articles/${metadata.slug}/`, outputDir);
+const coverPath = metadata.cover.replace(/^\.\//, "");
+const categoryNames = { kernel: "内核与底层" };
+const categoryName = categoryNames[metadata.category] ?? metadata.category;
+const displayDate = metadata.date.replaceAll("-", ".");
 const headings = [];
 const usedIds = new Map();
 const renderer = new marked.Renderer();
@@ -95,11 +125,11 @@ const home = shell({
         <span>01 篇</span>
       </div>
       <a class="post-card" href="articles/bus-matrix/">
-        <div class="post-cover"><img src="assets/bus-matrix-cover.png" alt="总线矩阵与芯片连接的技术插图"></div>
+        <div class="post-cover"><img src="articles/${metadata.slug}/${coverPath}" alt="${escapeHtml(metadata.coverAlt)}"></div>
         <div class="post-card-body">
-          <div class="post-meta"><span>嵌入式</span><time datetime="2026-06-23">2026.06.23</time></div>
-          <h3>M内核总线矩阵：AHB与APB仲裁</h3>
-          <p>Cortex-M 多层总线矩阵如何让主设备并发访问不同从设备，以及 AHB 与 APB 之间如何协同。</p>
+          <div class="post-meta"><span>${escapeHtml(categoryName)}</span><time datetime="${metadata.date}">${displayDate}</time></div>
+          <h3>${escapeHtml(metadata.title)}</h3>
+          <p>${escapeHtml(metadata.summary)}</p>
           <span class="read-link">阅读全文 <span aria-hidden="true">→</span></span>
         </div>
       </a>
@@ -109,8 +139,8 @@ const home = shell({
 });
 
 const article = shell({
-  title: "M内核总线矩阵：AHB与APB仲裁 | 技术手记",
-  description: "深入理解 Cortex-M 多层总线矩阵、AHB 与 APB 仲裁及常见工程问题。",
+  title: `${metadata.title} | 技术手记`,
+  description: metadata.summary,
   pathPrefix: "../../",
   pageClass: "article-page",
   body: `<div class="reading-progress" aria-hidden="true"></div>
@@ -119,11 +149,11 @@ const article = shell({
     <article>
       <a class="back-link" href="../../">${icon("arrow")} 返回文章列表</a>
       <header class="article-header">
-        <div class="post-meta"><span>嵌入式</span><time datetime="2026-06-23">2026.06.23</time><span class="reading-time">${icon("clock")} 约 18 分钟</span></div>
-        <h1>M内核总线矩阵：AHB与APB仲裁</h1>
-        <p>Cortex-M 多层总线矩阵、Flash 竞争、AHB 与 APB 仲裁，以及日常开发中的典型异常。</p>
+        <div class="post-meta"><span>${escapeHtml(categoryName)}</span><time datetime="${metadata.date}">${displayDate}</time><span class="reading-time">${icon("clock")} 约 ${metadata.readingTime} 分钟</span></div>
+        <h1>${escapeHtml(metadata.title)}</h1>
+        <p>${escapeHtml(metadata.summary)}</p>
       </header>
-      <figure class="article-cover"><img src="../../assets/bus-matrix-cover.png" alt="总线矩阵与芯片连接的技术插图"></figure>
+      <figure class="article-cover"><img src="${coverPath}" alt="${escapeHtml(metadata.coverAlt)}"></figure>
       <div class="article-layout">
         <div class="article-content">${articleHtml}</div>
         <aside class="toc"><div class="toc-inner"><p>本文目录</p><nav>${tableOfContents}</nav></div></aside>
@@ -144,7 +174,7 @@ await Promise.all([
   cp(new URL("../src/site.css", import.meta.url), new URL("./assets/site.css", outputDir)),
   cp(new URL("../src/site.js", import.meta.url), new URL("./assets/site.js", outputDir)),
   cp(new URL("../src/favicon.svg", import.meta.url), new URL("./assets/favicon.svg", outputDir)),
-  cp(new URL("../assets/bus-matrix-cover.png", import.meta.url), new URL("./assets/bus-matrix-cover.png", outputDir)),
+  cp(sourceImagesDir, new URL("./images/", articleDir), { recursive: true }),
 ]);
 
 console.log(`Built 2 pages with ${headings.length} table-of-contents entries.`);
