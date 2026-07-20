@@ -295,23 +295,3 @@ BusFault handler 内再次产生无法处理的 Fault，通常会先升级为 Ha
 外设产生 DMA request 后，DMA 仍需经过内部仲裁、Bus Matrix、Bridge 和目标存储器。带宽不足或最坏服务延迟过长可能导致 overrun/underrun。
 
 排查时应检查 DMA 映射、stream 优先级、FIFO/burst、外设数据宽度、目标存储器和并发主设备，而不是笼统归因于“REQ 与数据没有对齐”。
-
-## 阅读具体 STM32F4 手册时检查什么
-
-把上述模型应用到具体项目时，至少确认以下内容：
-
-1. System architecture/Bus Matrix 图中有哪些主设备和从设备。
-2. ICode、DCode、System、DMA 分别能访问哪些存储器。
-3. SRAM 是否被拆成多个独立从设备，CCM 是否可被 DMA 访问。
-4. Flash latency、Prefetch、ART 和相关控制位的适用条件。
-5. DMA stream/channel 映射、内部优先级、FIFO 和 burst 限制。
-6. AHB-to-APB Bridge 是否有 direct path 和额外仲裁。
-7. APB prescaler、TIMPRE 与实际定时器内核时钟。
-8. 目标芯片 Errata 是否包含总线、DMA、Flash 或外设限制。
-
-## 参考资料
-
-- [Arm Cortex-M4 Technical Reference Manual](https://documentation-service.arm.com/static/5fce431be167456a35b36ade)
-- [STM32 Cortex-M4 Programming Manual（PM0214）](https://www.st.com/resource/en/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf)
-- [STM32F4 系列文档入口](https://www.st.com/en/microcontrollers-microprocessors/stm32f4-series/documentation.html)
-- [Using the STM32F2, STM32F4 and STM32F7 Series DMA controller（AN4031）](https://www.st.com/resource/en/application_note/an4031-using-the-stm32f2-stm32f4-and-stm32f7-series-dma-controller-stmicroelectronics.pdf)

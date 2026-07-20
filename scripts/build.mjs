@@ -1,9 +1,8 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { marked } from "marked";
 
 const outputDir = new URL("../dist/", import.meta.url);
-const sourceFile = new URL("../content/posts/bus-matrix/bus-matrix.md", import.meta.url);
-const sourceImagesDir = new URL("../content/posts/bus-matrix/images/", import.meta.url);
+const postsDir = new URL("../content/posts/", import.meta.url);
 
 marked.use({
   gfm: true,
@@ -48,32 +47,30 @@ const slugify = (value) => {
   return slug || "section";
 };
 
-const source = await readFile(sourceFile, "utf8");
-const { data: metadata, content: markdown } = parseFrontMatter(source);
-const articleDir = new URL(`./articles/${metadata.slug}/`, outputDir);
-const coverPath = metadata.cover.replace(/^\.\//, "");
-const categoryNames = { kernel: "内核与底层" };
-const categoryName = categoryNames[metadata.category] ?? metadata.category;
-const displayDate = metadata.date.replaceAll("-", ".");
-const headings = [];
-const usedIds = new Map();
-const renderer = new marked.Renderer();
+const renderMarkdown = (markdown) => {
+  const headings = [];
+  const usedIds = new Map();
+  const renderer = new marked.Renderer();
 
-renderer.heading = ({ tokens, depth }) => {
-  const text = renderer.parser.parseInline(tokens);
-  const plainText = tokens.map((token) => token.text ?? token.raw ?? "").join("");
-  const baseId = slugify(plainText);
-  const count = usedIds.get(baseId) ?? 0;
-  usedIds.set(baseId, count + 1);
-  const id = count ? `${baseId}-${count + 1}` : baseId;
-  if (depth >= 2 && depth <= 3) headings.push({ depth, id, text: plainText });
-  return `<h${depth} id="${escapeHtml(id)}"><a class="heading-anchor" href="#${escapeHtml(id)}" aria-label="链接到本节">${text}</a></h${depth}>`;
+  renderer.heading = ({ tokens, depth }) => {
+    const text = renderer.parser.parseInline(tokens);
+    const plainText = tokens.map((token) => token.text ?? token.raw ?? "").join("");
+    const baseId = slugify(plainText);
+    const count = usedIds.get(baseId) ?? 0;
+    usedIds.set(baseId, count + 1);
+    const id = count ? `${baseId}-${count + 1}` : baseId;
+    if (depth >= 2 && depth <= 3) headings.push({ depth, id, text: plainText });
+    return `<h${depth} id="${escapeHtml(id)}"><a class="heading-anchor" href="#${escapeHtml(id)}" aria-label="链接到本节">${text}</a></h${depth}>`;
+  };
+
+  return {
+    html: marked.parse(markdown, { renderer }),
+    tableOfContents: headings
+      .map(({ depth, id, text }) => `<a class="toc-link toc-level-${depth}" href="#${escapeHtml(id)}">${escapeHtml(text)}</a>`)
+      .join("\n"),
+    headingCount: headings.length,
+  };
 };
-
-const articleHtml = marked.parse(markdown, { renderer });
-const tableOfContents = headings
-  .map(({ depth, id, text }) => `<a class="toc-link toc-level-${depth}" href="#${escapeHtml(id)}">${escapeHtml(text)}</a>`)
-  .join("\n");
 
 const shell = ({ title, description, pathPrefix, pageClass, body }) => `<!doctype html>
 <html lang="zh-CN">
@@ -107,6 +104,47 @@ const header = (prefix = "") => `<header class="site-header">
   <button class="icon-button theme-toggle" type="button" aria-label="切换深浅主题" title="切换深浅主题">${icon("sun")}</button>
 </header>`;
 
+const categoryNames = {
+  debugging: "调试笔记",
+  kernel: "内核与底层",
+  software: "软件与工具链",
+};
+
+const directoryEntries = await readdir(postsDir, { withFileTypes: true });
+const posts = (
+  await Promise.all(
+    directoryEntries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const sourceFile = new URL(`./${entry.name}/${entry.name}.md`, postsDir);
+        const source = await readFile(sourceFile, "utf8");
+        const { data: metadata, content: markdown } = parseFrontMatter(source);
+        return { directoryName: entry.name, metadata, markdown };
+      }),
+  )
+)
+  .filter(({ metadata }) => !metadata.draft)
+  .sort((a, b) => b.metadata.date.localeCompare(a.metadata.date));
+
+if (!posts.length) throw new Error("No published articles found.");
+
+const postCards = posts
+  .map(({ metadata }) => {
+    const coverPath = metadata.cover.replace(/^\.\//, "");
+    const categoryName = categoryNames[metadata.category] ?? metadata.category;
+    const displayDate = metadata.date.replaceAll("-", ".");
+    return `<a class="post-card" href="articles/${metadata.slug}/">
+        <div class="post-cover"><img src="articles/${metadata.slug}/${coverPath}" alt="${escapeHtml(metadata.coverAlt)}"></div>
+        <div class="post-card-body">
+          <div class="post-meta"><span>${escapeHtml(categoryName)}</span><time datetime="${metadata.date}">${displayDate}</time></div>
+          <h3>${escapeHtml(metadata.title)}</h3>
+          <p>${escapeHtml(metadata.summary)}</p>
+          <span class="read-link">阅读全文 <span aria-hidden="true">→</span></span>
+        </div>
+      </a>`;
+  })
+  .join("\n");
+
 const home = shell({
   title: "技术手记",
   description: "记录嵌入式系统、底层原理与工程实践。",
@@ -122,59 +160,66 @@ const home = shell({
     <section class="post-list" aria-labelledby="latest-title">
       <div class="section-heading">
         <h2 id="latest-title">最新文章</h2>
-        <span>01 篇</span>
+        <span>${String(posts.length).padStart(2, "0")} 篇</span>
       </div>
-      <a class="post-card" href="articles/bus-matrix/">
-        <div class="post-cover"><img src="articles/${metadata.slug}/${coverPath}" alt="${escapeHtml(metadata.coverAlt)}"></div>
-        <div class="post-card-body">
-          <div class="post-meta"><span>${escapeHtml(categoryName)}</span><time datetime="${metadata.date}">${displayDate}</time></div>
-          <h3>${escapeHtml(metadata.title)}</h3>
-          <p>${escapeHtml(metadata.summary)}</p>
-          <span class="read-link">阅读全文 <span aria-hidden="true">→</span></span>
-        </div>
-      </a>
+      ${postCards}
     </section>
   </main>
   <footer class="site-footer"><span>技术手记</span><span>专注底层，持续记录。</span></footer>`,
 });
 
-const article = shell({
-  title: `${metadata.title} | 技术手记`,
-  description: metadata.summary,
-  pathPrefix: "../../",
-  pageClass: "article-page",
-  body: `<div class="reading-progress" aria-hidden="true"></div>
-  ${header("../../")}
-  <main class="article-shell">
-    <article>
-      <a class="back-link" href="../../">${icon("arrow")} 返回文章列表</a>
-      <header class="article-header">
-        <div class="post-meta"><span>${escapeHtml(categoryName)}</span><time datetime="${metadata.date}">${displayDate}</time><span class="reading-time">${icon("clock")} 约 ${metadata.readingTime} 分钟</span></div>
-        <h1>${escapeHtml(metadata.title)}</h1>
-        <p>${escapeHtml(metadata.summary)}</p>
-      </header>
-      <figure class="article-cover"><img src="${coverPath}" alt="${escapeHtml(metadata.coverAlt)}"></figure>
-      <div class="article-layout">
-        <div class="article-content">${articleHtml}</div>
-        <aside class="toc"><div class="toc-inner"><p>本文目录</p><nav>${tableOfContents}</nav></div></aside>
-      </div>
-    </article>
-  </main>
-  <footer class="site-footer"><span>技术手记</span><a href="../../">返回首页</a></footer>`,
+const articlePages = posts.map(({ directoryName, metadata, markdown }) => {
+  const { html, tableOfContents, headingCount } = renderMarkdown(markdown);
+  const coverPath = metadata.cover.replace(/^\.\//, "");
+  const categoryName = categoryNames[metadata.category] ?? metadata.category;
+  const displayDate = metadata.date.replaceAll("-", ".");
+  const htmlPage = shell({
+    title: `${metadata.title} | 技术手记`,
+    description: metadata.summary,
+    pathPrefix: "../../",
+    pageClass: "article-page",
+    body: `<div class="reading-progress" aria-hidden="true"></div>
+    ${header("../../")}
+    <main class="article-shell">
+      <article>
+        <a class="back-link" href="../../">${icon("arrow")} 返回文章列表</a>
+        <header class="article-header">
+          <div class="post-meta"><span>${escapeHtml(categoryName)}</span><time datetime="${metadata.date}">${displayDate}</time><span class="reading-time">${icon("clock")} 约 ${metadata.readingTime} 分钟</span></div>
+          <h1>${escapeHtml(metadata.title)}</h1>
+          <p>${escapeHtml(metadata.summary)}</p>
+        </header>
+        <figure class="article-cover"><img src="${coverPath}" alt="${escapeHtml(metadata.coverAlt)}"></figure>
+        <div class="article-layout">
+          <div class="article-content">${html}</div>
+          <aside class="toc"><div class="toc-inner"><p>本文目录</p><nav>${tableOfContents}</nav></div></aside>
+        </div>
+      </article>
+    </main>
+    <footer class="site-footer"><span>技术手记</span><a href="../../">返回首页</a></footer>`,
+  });
+  return { directoryName, metadata, htmlPage, headingCount };
 });
 
 await rm(outputDir, { recursive: true, force: true });
-await mkdir(articleDir, { recursive: true });
 await mkdir(new URL("./assets/", outputDir), { recursive: true });
+await Promise.all(
+  articlePages.map(({ metadata }) => mkdir(new URL(`./articles/${metadata.slug}/`, outputDir), { recursive: true })),
+);
 await Promise.all([
   writeFile(new URL("./index.html", outputDir), home),
-  writeFile(new URL("./index.html", articleDir), article),
   writeFile(new URL("./404.html", outputDir), home),
   writeFile(new URL("./.nojekyll", outputDir), ""),
   cp(new URL("../src/site.css", import.meta.url), new URL("./assets/site.css", outputDir)),
   cp(new URL("../src/site.js", import.meta.url), new URL("./assets/site.js", outputDir)),
   cp(new URL("../src/favicon.svg", import.meta.url), new URL("./assets/favicon.svg", outputDir)),
-  cp(sourceImagesDir, new URL("./images/", articleDir), { recursive: true }),
+  ...articlePages.flatMap(({ directoryName, metadata, htmlPage }) => {
+    const articleDir = new URL(`./articles/${metadata.slug}/`, outputDir);
+    return [
+      writeFile(new URL("./index.html", articleDir), htmlPage),
+      cp(new URL(`./${directoryName}/images/`, postsDir), new URL("./images/", articleDir), { recursive: true }),
+    ];
+  }),
 ]);
 
-console.log(`Built 2 pages with ${headings.length} table-of-contents entries.`);
+const headingCount = articlePages.reduce((total, article) => total + article.headingCount, 0);
+console.log(`Built ${articlePages.length} articles with ${headingCount} table-of-contents entries.`);

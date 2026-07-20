@@ -1,8 +1,8 @@
 # 技术手记
 
-一个无需后端的静态技术博客，当前收录《STM32F4 总线架构：Cortex-M4、AHB 与 APB》。
+一个无需后端的静态技术博客，用于整理嵌入式系统、底层原理与调试实践。
 
-文章位于 `content/posts/<slug>/<slug>.md`，文章专属图片放在同目录的 `images/` 中，并在 Markdown 内使用相对路径引用。
+文章位于 `content/posts/<slug>/<slug>.md`，文章专属图片放在同目录的 `images/` 中，并在 Markdown 内使用相对路径引用。构建脚本会自动扫描并按日期倒序生成首页和文章页。
 
 ## 本地预览
 
