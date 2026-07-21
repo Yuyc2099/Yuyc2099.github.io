@@ -1,3 +1,25 @@
+// Category filter
+const filterBtns = [...document.querySelectorAll(".filter-btn")];
+const postCards = [...document.querySelectorAll("#post-cards .post-card")];
+const postCount = document.getElementById("post-count");
+
+if (filterBtns.length) {
+  filterBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const { filter } = btn.dataset;
+      let visible = 0;
+      postCards.forEach((card) => {
+        const show = filter === "all" || card.dataset.category === filter;
+        card.style.display = show ? "" : "none";
+        if (show) visible++;
+      });
+      if (postCount) postCount.textContent = String(visible).padStart(2, "0") + " 篇";
+    });
+  });
+}
+
 const themeToggle = document.querySelector(".theme-toggle");
 
 themeToggle?.addEventListener("click", () => {
