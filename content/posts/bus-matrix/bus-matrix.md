@@ -2,7 +2,7 @@
 title: "STM32F4 总线架构：Cortex-M4、AHB 与 APB"
 slug: bus-matrix
 date: 2026-06-23
-updated: 2026-07-20
+updated: 2026-07-21
 summary: "从 Cortex-M4 的 ICode、DCode 和 System 接口出发，理解 STM32F4 的 Bus Matrix、Flash、DMA 与 AHB/APB 访问路径。"
 category: kernel
 tags: [STM32F4, Cortex-M4, AHB, APB, DMA]
@@ -295,3 +295,17 @@ BusFault handler 内再次产生无法处理的 Fault，通常会先升级为 Ha
 外设产生 DMA request 后，DMA 仍需经过内部仲裁、Bus Matrix、Bridge 和目标存储器。带宽不足或最坏服务延迟过长可能导致 overrun/underrun。
 
 排查时应检查 DMA 映射、stream 优先级、FIFO/burst、外设数据宽度、目标存储器和并发主设备，而不是笼统归因于“REQ 与数据没有对齐”。
+
+## 总结
+
+一次访问的速度首先受目标器件影响：Flash 较慢，读取可能需要等待周期，编程和擦除所需时间更长；片上 SRAM 通常支持零等待访问，但一次读写仍然需要总线周期。缓存命中可以避免真正访问 Flash，从而同时减少器件等待和总线请求，但不能加快 Flash 的编程或擦除。
+
+Bus Matrix 的主要价值，是允许多个主设备并行访问不同的从设备。例如 CPU 从 Flash 取指、DMA 向 SRAM 写数据，两条路径互不冲突时可以同时工作。如果多个请求汇聚到同一个从设备、同一个端口或同一条共享路径，则必须经过仲裁并排队。即使目标是不同的 APB 外设，也可能因为共享同一个 AHB-to-APB Bridge 而发生竞争。
+
+因此，一次访问的耗时可以粗略理解为：
+
+```text
+访问延迟 ≈ 器件服务时间 + 总线与 Bridge 传输时间 + 竞争排队时间
+```
+
+最终速度取决于完整路径中最慢的一环，而不只是 CPU 或总线的标称频率。DMA 可以把数据搬运工作从 CPU 转移出去，但仍会占用总线和存储器带宽，因此不一定让整个系统更快。
