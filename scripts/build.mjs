@@ -86,6 +86,11 @@ const shell = ({ title, description, pathPrefix, pageClass, body }) => `<!doctyp
 </head>
 <body class="${pageClass}">
 ${body}
+<nav class="quick-navigation" aria-label="页面快速导航">
+  ${pageClass === "article-page" ? `<a class="quick-nav-control article-list-shortcut" href="${pathPrefix}#post-cards" aria-label="返回文章列表" title="返回文章列表">${icon("list")}</a>` : ""}
+  <button class="quick-nav-control" type="button" data-scroll-target="top" aria-label="返回页面顶部" title="返回顶部">${icon("up")}</button>
+  <button class="quick-nav-control" type="button" data-scroll-target="bottom" aria-label="前往页面底部" title="前往底部">${icon("down")}</button>
+</nav>
 <script src="${pathPrefix}assets/site.js" defer></script>
 </body>
 </html>`;
@@ -95,6 +100,9 @@ const icon = (name) => {
     sun: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>',
     arrow: '<path d="m15 18-6-6 6-6"></path>',
     clock: '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>',
+    list: '<path d="M8 6h12M8 12h12M8 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path>',
+    up: '<path d="m6 15 6-6 6 6"></path><path d="M12 9v10"></path>',
+    down: '<path d="m6 9 6 6 6-6"></path><path d="M12 5v10"></path>',
   };
   return `<svg viewBox="0 0 24 24" aria-hidden="true">${paths[name]}</svg>`;
 };
@@ -175,6 +183,24 @@ const profile = `<aside class="profile-card">
   </div>
 </aside>`;
 
+const renderAllPostLinks = (prefix = "", currentSlug = "") =>
+  posts
+    .map(({ metadata }) => {
+      const current = metadata.slug === currentSlug ? ' aria-current="page"' : "";
+      return `<a href="${prefix}articles/${metadata.slug}/"${current}>${escapeHtml(metadata.title)}</a>`;
+    })
+    .join("\n");
+
+const allPosts = `<nav class="all-posts-card" aria-label="全部文章">
+  <div class="all-posts-heading">
+    <h2>全部文章</h2>
+    <span>${String(posts.length).padStart(2, "0")}</span>
+  </div>
+  <div class="all-posts-list">
+    ${renderAllPostLinks()}
+  </div>
+</nav>`;
+
 const home = shell({
   title: "嵌入式软件笔记",
   description: "记录嵌入式系统、底层原理与工程实践。",
@@ -198,6 +224,7 @@ const home = shell({
     </div>
     <div class="home-right">
       ${profile}
+      ${allPosts}
     </div>
   </main>
   <footer class="site-footer"><span>嵌入式软件笔记</span></footer>`,
@@ -225,7 +252,14 @@ const articlePages = posts.map(({ directoryName, metadata, markdown }) => {
         </header>
         <div class="article-layout">
           <div class="article-content">${html}</div>
-          <aside class="toc"><div class="toc-inner"><p>本文目录</p><nav>${tableOfContents}</nav></div></aside>
+          <aside class="toc"><div class="toc-inner">
+            <p>本文目录</p>
+            <nav>${tableOfContents}</nav>
+            <div class="toc-all-posts">
+              <p>全部文章</p>
+              <nav class="all-posts-list" aria-label="全部文章">${renderAllPostLinks("../../", metadata.slug)}</nav>
+            </div>
+          </div></aside>
         </div>
       </article>
     </main>

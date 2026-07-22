@@ -56,3 +56,35 @@ if (sections.length) {
   );
   sections.forEach((section) => observer.observe(section));
 }
+
+const quickNavigation = document.querySelector(".quick-navigation");
+const scrollButtons = [...document.querySelectorAll("[data-scroll-target]")];
+
+if (quickNavigation && scrollButtons.length) {
+  const articleListShortcut = quickNavigation.querySelector(".article-list-shortcut");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  const updateQuickNavigation = () => {
+    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+    const canScroll = scrollable > 4;
+    const atTop = window.scrollY <= 4;
+    const atBottom = window.scrollY >= scrollable - 4;
+
+    quickNavigation.hidden = !canScroll && !articleListShortcut;
+    scrollButtons.forEach((button) => {
+      button.hidden = !canScroll;
+      button.disabled = button.dataset.scrollTarget === "top" ? atTop : atBottom;
+    });
+  };
+
+  scrollButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const top = button.dataset.scrollTarget === "top" ? 0 : document.documentElement.scrollHeight;
+      window.scrollTo({ top, behavior: reducedMotion.matches ? "auto" : "smooth" });
+    });
+  });
+
+  updateQuickNavigation();
+  window.addEventListener("scroll", updateQuickNavigation, { passive: true });
+  window.addEventListener("resize", updateQuickNavigation);
+}
