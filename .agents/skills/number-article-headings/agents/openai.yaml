@@ -1,0 +1,4 @@
+interface:
+  display_name: "文章标题编号"
+  short_description: "统一 Markdown 文章的章节编号、目录层级与标题格式"
+  default_prompt: "使用 $number-article-headings 检查并统一新文章的章节标题编号。"
