@@ -1,17 +1,4 @@
----
-title: "STM32F4 总线架构：Cortex-M4、AHB 与 APB"
-slug: bus-matrix
-date: 2026-06-23
-updated: 2026-07-21
-summary: "从 Cortex-M4 的 ICode、DCode 和 System 接口出发，理解 STM32F4 的 Bus Matrix、Flash、DMA 与 AHB/APB 访问路径。"
-category: kernel
-tags: [STM32F4, Cortex-M4, AHB, APB, DMA]
-series: cortex-m-architecture
-cover: ./images/cover.png
-coverAlt: "总线矩阵与芯片连接的技术插图"
-readingTime: 14
-draft: false
----
+# STM32F4 总线架构：Cortex-M4、AHB 与 APB
 
 ## 1. 阅读范围与边界
 

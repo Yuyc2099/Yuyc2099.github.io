@@ -1,17 +1,4 @@
----
-title: "Cortex-M 异常分析：从栈帧到 HardFault 定位"
-slug: cortex-m-fault-analysis
-date: 2026-07-06
-updated: 2026-07-21
-summary: "面向 Cortex-M0/M0+/M3/M4，梳理异常入口栈帧、HardFault 定位、栈回溯、离线转储及常见软件缺陷。"
-category: debugging
-tags: [Cortex-M, HardFault, 异常, 栈回溯, TRACE32]
-series: debugging-notes
-cover: ./images/cover.svg
-coverAlt: "Cortex-M 异常现场、寄存器与调用栈的抽象示意图"
-readingTime: 19
-draft: false
----
+# Cortex-M 异常分析：从栈帧到 HardFault 定位
 
 虽然 M0/M0+ 与 M3/M4 的异常体系不同（M3/M4 有 MemManage、BusFault 和 UsageFault，M0/M0+ 主要汇总到 HardFault），但异常入口的基本栈帧和常见软件缺陷具有共通性。本文先介绍通用的现场分析方法，再补充两类内核的异常差异。
 

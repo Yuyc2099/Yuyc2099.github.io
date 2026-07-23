@@ -1,17 +1,4 @@
----
-title: "嵌入式软件缺陷深入分析：内存、栈与 RTOS 同步"
-slug: embedded-software-fault-analysis
-date: 2026-06-25
-updated: 2026-07-22
-summary: "深入分析嵌入式系统中的堆破坏、线程栈溢出、死锁、优先级反转、IPC 误用与并发竞态，并整理 RTOS 现场保存方法。"
-category: debugging
-tags: [嵌入式, RTOS, RT-Thread, 内存, 栈溢出, 死锁, IPC]
-series: debugging-notes
-cover: ./images/cover.svg
-coverAlt: "嵌入式软件中的内存、线程栈与 RTOS 同步关系示意图"
-readingTime: 25
-draft: false
----
+# 嵌入式软件缺陷深入分析：内存、栈与 RTOS 同步
 
 上一篇 [Cortex-M 异常分析](/articles/cortex-m-fault-analysis/) 介绍了异常栈帧、HardFault 定位和常见软件缺陷。本篇继续深入软件侧：不仅关注最终进入了哪一种 fault，还要追查是哪一次越界写、错误释放或同步操作破坏了系统状态。
 

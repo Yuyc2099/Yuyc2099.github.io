@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { marked } from "marked";
 
 const outputDir = new URL("../dist/", import.meta.url);
@@ -13,29 +13,16 @@ marked.use({
 const escapeHtml = (value) =>
   value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
-const parseFrontMatter = (source) => {
-  const match = source.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---\r?\n/);
-  if (!match) throw new Error("Article is missing front matter.");
-
-  const data = {};
-  for (const line of match[1].split(/\r?\n/)) {
-    const separator = line.indexOf(":");
-    if (separator === -1) continue;
-    const key = line.slice(0, separator).trim();
-    const rawValue = line.slice(separator + 1).trim();
-    if (rawValue.startsWith('"') && rawValue.endsWith('"')) {
-      data[key] = JSON.parse(rawValue);
-    } else if (rawValue.startsWith("[") && rawValue.endsWith("]")) {
-      data[key] = rawValue.slice(1, -1).split(",").map((item) => item.trim());
-    } else if (rawValue === "true" || rawValue === "false") {
-      data[key] = rawValue === "true";
-    } else {
-      data[key] = rawValue;
-    }
+const exists = async (file) => {
+  try {
+    await access(file);
+    return true;
+  } catch {
+    return false;
   }
-
-  return { data, content: source.slice(match[0].length) };
 };
+
+const stripLeadingDocumentTitle = (markdown) => markdown.replace(/^\uFEFF?#\s+.+\r?\n(?:\r?\n)?/, "");
 
 const slugify = (value) => {
   const slug = value
@@ -125,9 +112,15 @@ const posts = (
       .filter((entry) => entry.isDirectory())
       .map(async (entry) => {
         const sourceFile = new URL(`./${entry.name}/${entry.name}.md`, postsDir);
-        const source = await readFile(sourceFile, "utf8");
-        const { data: metadata, content: markdown } = parseFrontMatter(source);
-        return { directoryName: entry.name, metadata, markdown };
+        const metadataFile = new URL(`./${entry.name}/post.json`, postsDir);
+        const imagesDir = new URL(`./${entry.name}/images/`, postsDir);
+        const markdown = await readFile(sourceFile, "utf8");
+        const metadata = JSON.parse(await readFile(metadataFile, "utf8"));
+        const firstLine = markdown.replace(/^\uFEFF/, "").split(/\r?\n/, 1)[0];
+        if (firstLine !== `# ${metadata.title}`) {
+          throw new Error(`${entry.name}: Markdown H1 must match post.json title.`);
+        }
+        return { directoryName: entry.name, metadata, markdown, hasImages: await exists(imagesDir) };
       }),
   )
 )
@@ -230,9 +223,8 @@ const home = shell({
   <footer class="site-footer"><span>嵌入式软件笔记</span></footer>`,
 });
 
-const articlePages = posts.map(({ directoryName, metadata, markdown }) => {
-  const { html, tableOfContents, headingCount } = renderMarkdown(markdown);
-  const coverPath = metadata.cover.replace(/^\.\//, "");
+const articlePages = posts.map(({ directoryName, metadata, markdown, hasImages }) => {
+  const { html, tableOfContents, headingCount } = renderMarkdown(stripLeadingDocumentTitle(markdown));
   const categoryName = categoryNames[metadata.category] ?? metadata.category;
   const displayDate = metadata.date.replaceAll("-", ".");
   const htmlPage = shell({
@@ -265,7 +257,7 @@ const articlePages = posts.map(({ directoryName, metadata, markdown }) => {
     </main>
     <footer class="site-footer"><span>嵌入式软件笔记</span><a href="../../">返回首页</a></footer>`,
   });
-  return { directoryName, metadata, htmlPage, headingCount };
+  return { directoryName, metadata, htmlPage, headingCount, hasImages };
 });
 
 await rm(outputDir, { recursive: true, force: true });
@@ -280,11 +272,13 @@ await Promise.all([
   cp(new URL("../src/site.css", import.meta.url), new URL("./assets/site.css", outputDir)),
   cp(new URL("../src/site.js", import.meta.url), new URL("./assets/site.js", outputDir)),
   cp(new URL("../src/favicon.svg", import.meta.url), new URL("./assets/favicon.svg", outputDir)),
-  ...articlePages.flatMap(({ directoryName, metadata, htmlPage }) => {
+  ...articlePages.flatMap(({ directoryName, metadata, htmlPage, hasImages }) => {
     const articleDir = new URL(`./articles/${metadata.slug}/`, outputDir);
     return [
       writeFile(new URL("./index.html", articleDir), htmlPage),
-      cp(new URL(`./${directoryName}/images/`, postsDir), new URL("./images/", articleDir), { recursive: true }),
+      ...(hasImages
+        ? [cp(new URL(`./${directoryName}/images/`, postsDir), new URL("./images/", articleDir), { recursive: true })]
+        : []),
     ];
   }),
 ]);

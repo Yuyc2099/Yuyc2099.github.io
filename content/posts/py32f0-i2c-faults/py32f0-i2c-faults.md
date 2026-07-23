@@ -1,17 +1,4 @@
----
-title: "PY32F0 硬件 I²C 异常：丢字节与总线锁死分析"
-slug: py32f0-i2c-faults
-date: 2026-07-21
-updated: 2026-07-21
-summary: "从逻辑分析仪证据出发，分析 PY32F0 硬件 I²C 偶发丢字节和总线锁死，并给出超时、校验与 I²C 恢复方法。"
-category: debugging
-tags: [PY32F0, Cortex-M0+, I2C, 调试, 可靠性]
-series: debugging-notes
-cover: ./images/cover.png
-coverAlt: "I²C 波形中出现丢失脉冲和总线停滞的技术插图"
-readingTime: 13
-draft: false
----
+# PY32F0 硬件 I²C 异常：丢字节与总线锁死分析
 
 ## 1. 阅读范围与信息边界
 

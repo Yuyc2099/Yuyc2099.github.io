@@ -1,17 +1,4 @@
----
-title: "利用返回地址定位调用来源：Log、MAP 与 AXF 联合调试"
-slug: callstack-debug
-date: 2026-06-29
-updated: 2026-07-20
-summary: "在 Cortex-M 固件中记录函数返回地址，并结合 MAP、AXF、addr2line 与反汇编定位直接调用方。"
-category: debugging
-tags: [Cortex-M, 调试, MAP, AXF, addr2line]
-series: debugging-notes
-cover: ./images/map-search-return-address.png
-coverAlt: "在 MAP 文件中定位返回地址的脱敏示例"
-readingTime: 10
-draft: false
----
+# 利用返回地址定位调用来源：Log、MAP 与 AXF 联合调试
 
 ## 1. 方法的用途与边界
 
@@ -178,4 +165,3 @@ system_vbus_vbat_set_when_power_on
 ```
 
 如需继续分析触发条件，再从 `BL` 向上检查参数装载、比较和条件分支；不要只凭函数名推断业务路径。
-

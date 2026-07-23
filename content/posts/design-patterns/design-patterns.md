@@ -1,17 +1,4 @@
----
-title: "设计模式：软件设计原则与 GoF 23 种模式"
-slug: design-patterns
-date: 2026-06-25
-updated: 2026-07-21
-summary: "整理常用软件设计原则，以及创建型、结构型和行为型设计模式的定义、目的与适用思路。"
-category: software
-tags: [设计模式, 软件设计, GoF, C语言]
-series: software-engineering
-cover: ./images/cover.svg
-coverAlt: "由不同形状模块组合成的软件设计结构示意图"
-readingTime: 12
-draft: false
----
+# 设计模式：软件设计原则与 GoF 23 种模式
 
 ## 1. 软件设计原则
 

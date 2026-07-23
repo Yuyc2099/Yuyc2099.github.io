@@ -1,17 +1,4 @@
----
-title: "Cortex-M 编译与链接：从源代码到固件镜像"
-slug: cortex-m-compilation
-date: 2026-06-25
-updated: 2026-07-20
-summary: "以 Arm GNU Toolchain 为主线，理解预处理、编译、汇编、链接、启动代码、ELF Section 与 Flash/RAM 布局。"
-category: software
-tags: [Cortex-M, GCC, ELF, Linker, Startup]
-series: embedded-toolchain
-cover: ./images/cover.png
-coverAlt: "源代码经过编译、汇编和链接后映射到微控制器存储器的抽象插图"
-readingTime: 24
-draft: false
----
+# Cortex-M 编译与链接：从源代码到固件镜像
 
 ## 1. 阅读范围
 

@@ -23,13 +23,17 @@ const collectMarkdown = async (target) => {
 };
 
 const numberHeadings = (source, file) => {
-  const newline = source.includes("\r\n") ? "\r\n" : "\n";
-  const lines = source.split(/\r?\n/);
+  const parts = source.split(/(\r\n|\n|\r)/);
+  const lines = [];
+  for (let index = 0; index < parts.length; index += 2) {
+    lines.push({ text: parts[index], newline: parts[index + 1] ?? "" });
+  }
+
   let fence = null;
   let section = 0;
   let subsection = 0;
 
-  const numbered = lines.map((line) => {
+  const numberLine = (line) => {
     const fenceMatch = line.match(/^\s*(`{3,}|~{3,})/);
     if (fenceMatch) {
       const marker = fenceMatch[1];
@@ -61,9 +65,9 @@ const numberHeadings = (source, file) => {
 
     subsection += 1;
     return `### ${section}.${subsection} ${title}`;
-  });
+  };
 
-  return numbered.join(newline);
+  return lines.map(({ text, newline }) => numberLine(text) + newline).join("");
 };
 
 for (const target of targets) await collectMarkdown(target);

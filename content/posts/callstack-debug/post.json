@@ -1,0 +1,12 @@
+{
+  "title": "利用返回地址定位调用来源：Log、MAP 与 AXF 联合调试",
+  "slug": "callstack-debug",
+  "date": "2026-06-29",
+  "updated": "2026-07-20",
+  "summary": "在 Cortex-M 固件中记录函数返回地址，并结合 MAP、AXF、addr2line 与反汇编定位直接调用方。",
+  "category": "debugging",
+  "tags": ["Cortex-M", "调试", "MAP", "AXF", "addr2line"],
+  "series": "debugging-notes",
+  "readingTime": 10,
+  "draft": false
+}
