@@ -1,0 +1,12 @@
+{
+  "title": "一阶低通滤波与指数平滑",
+  "slug": "first-order-low-pass-filter",
+  "date": "2026-07-22",
+  "updated": "2026-07-22",
+  "summary": "比较指数平滑与相邻输入平均的一阶低通滤波器，分析参数、截止频率、阶跃响应、高频抑制和实现状态。",
+  "category": "software",
+  "tags": ["低通滤波", "指数平滑", "数字滤波", "C语言", "嵌入式"],
+  "series": "embedded-algorithms",
+  "readingTime": 16,
+  "draft": false
+}
