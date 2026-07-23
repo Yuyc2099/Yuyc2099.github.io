@@ -1,0 +1,12 @@
+{
+  "title": "裸机并发架构笔记：OSAL 与 LTX 的事件调度设计",
+  "slug": "bare-metal-event-driven-architectures",
+  "date": "2026-07-22",
+  "updated": "2026-07-22",
+  "summary": "从调度、事件、定时器、消息与低功耗路径出发，对比 OSAL 和 LTX 两种协作式裸机架构，并建立可继续纳入 Protothreads 的分析框架。",
+  "category": "kernel",
+  "tags": ["裸机", "调度器", "OSAL", "LTX", "事件驱动", "Tickless"],
+  "series": "bare-metal-architecture",
+  "readingTime": 24,
+  "draft": false
+}
