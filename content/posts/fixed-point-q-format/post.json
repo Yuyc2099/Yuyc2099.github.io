@@ -1,0 +1,12 @@
+{
+  "title": "定点数与 Q 格式",
+  "slug": "fixed-point-q-format",
+  "date": "2026-07-22",
+  "updated": "2026-07-22",
+  "summary": "从缩放、精度与范围出发，整理 Q 格式转换、对齐、四则运算、舍入、饱和及一阶低通滤波实现。",
+  "category": "software",
+  "tags": ["定点数", "Q格式", "C语言", "嵌入式", "数值计算"],
+  "series": "embedded-algorithms",
+  "readingTime": 18,
+  "draft": false
+}
