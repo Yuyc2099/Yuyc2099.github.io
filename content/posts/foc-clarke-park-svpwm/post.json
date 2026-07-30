@@ -1,0 +1,12 @@
+{
+  "title": "FOC 坐标变换与 SVPWM 基础",
+  "slug": "foc-clarke-park-svpwm",
+  "date": "2026-07-30",
+  "updated": "2026-07-30",
+  "summary": "整理 FOC 中的 Clarke、Park 变换，以及 SVPWM 电压矢量、扇区判断和第一扇区 T4、T6 作用时间的推导。",
+  "category": "software",
+  "tags": ["FOC", "Clarke变换", "Park变换", "SVPWM", "电机控制"],
+  "series": "motor-control",
+  "readingTime": 12,
+  "draft": false
+}

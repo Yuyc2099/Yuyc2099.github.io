@@ -137,6 +137,7 @@ button { font: inherit; }
 .article-content li { margin: 6px 0; padding-left: 4px; }
 .article-content blockquote { margin: 28px 0; padding: 18px 22px; border-left: 3px solid var(--copper); background: var(--surface); color: var(--muted); }
 .article-content blockquote > :last-child { margin-bottom: 0; }
+.article-content .article-note-image { width: min(100%, 400px); height: auto; margin: 26px auto; }
 .article-content code { padding: 0.15em 0.38em; border-radius: 3px; background: color-mix(in srgb, var(--green) 10%, transparent); color: var(--green); font: 0.86em/1.5 Consolas, "SFMono-Regular", monospace; }
 .article-content pre { max-width: 100%; margin: 26px 0; padding: 22px; overflow-x: auto; border: 1px solid #34403b; border-radius: 4px; background: var(--code); color: var(--code-ink); font-size: 14px; line-height: 1.65; }
 .article-content pre code { padding: 0; background: transparent; color: inherit; }
