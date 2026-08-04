@@ -1,0 +1,12 @@
+{
+  "title": "高性能环形 FIFO 的实现原理",
+  "slug": "high-performance-ring-fifo",
+  "date": "2026-08-04",
+  "updated": "2026-08-04",
+  "summary": "从普通环形 FIFO 出发，说明单调读写计数器、位掩码寻址、完整容量利用和无符号回绕，并给出精简的通用实现。",
+  "category": "software",
+  "tags": ["FIFO", "环形缓冲区", "数据结构", "C语言", "嵌入式"],
+  "series": "embedded-algorithms",
+  "readingTime": 8,
+  "draft": false
+}
