@@ -1,0 +1,12 @@
+{
+  "title": "电机最高转速估算与反电动势测量",
+  "slug": "motor-speed-estimation-back-emf",
+  "date": "2026-08-17",
+  "updated": "2026-08-17",
+  "summary": "从软件限速、基准频率和母线电压出发，估算电机最高转速，并整理反电动势与永磁体磁链的测量和计算方法。",
+  "category": "software",
+  "tags": ["电机控制", "转速估算", "反电动势", "SVPWM", "永磁体磁链"],
+  "series": "motor-control",
+  "readingTime": 5,
+  "draft": false
+}
