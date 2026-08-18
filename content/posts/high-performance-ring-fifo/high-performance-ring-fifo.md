@@ -1,5 +1,11 @@
 # 高性能环形 FIFO 的实现原理
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:high-performance-ring-fifo:2026-08-04
+-->
+
 FIFO（First In, First Out）按照“先进先出”的顺序保存数据。环形 FIFO 使用一块固定大小的数组，通过循环移动读写位置重复利用数组空间，不需要在运行期间搬移已有数据。
 
 环形 FIFO 有两种常见实现思路：

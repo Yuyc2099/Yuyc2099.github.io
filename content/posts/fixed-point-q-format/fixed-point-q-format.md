@@ -1,5 +1,11 @@
 # 定点数与 Q 格式
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:fixed-point-q-format:2026-07-22
+-->
+
 ## 1. 为什么使用定点数
 
 定点数使用整数模拟小数，常用于没有浮点运算单元，或者对执行时间、存储空间有严格要求的 MCU。

@@ -8,5 +8,10 @@
   "tags": ["嵌入式", "RTOS", "RT-Thread", "内存", "栈溢出", "死锁", "IPC"],
   "series": "debugging-notes",
   "readingTime": 25,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:embedded-software-fault-analysis:2026-06-25"
+  },
   "draft": false
 }

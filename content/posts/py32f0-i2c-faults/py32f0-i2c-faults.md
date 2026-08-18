@@ -1,5 +1,11 @@
 # PY32F0 硬件 I²C 异常：丢字节与总线锁死分析
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:py32f0-i2c-faults:2026-07-21
+-->
+
 ## 1. 阅读范围与信息边界
 
 这次问题来自一个 PY32F0 系列 MCU 与 I²C 传感器通信的项目。项目名称、传感器型号、设备地址、寄存器、固件数据和内部代码均已省略，只保留可复用的排查方法与结论。

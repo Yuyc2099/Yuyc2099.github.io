@@ -8,5 +8,10 @@
   "tags": ["裸机", "状态机", "调度器", "OSAL", "LTX", "Protothreads", "QP/C", "协程"],
   "series": "bare-metal-architecture",
   "readingTime": 22,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:bare-metal-event-driven-architectures:2026-07-22"
+  },
   "draft": false
 }

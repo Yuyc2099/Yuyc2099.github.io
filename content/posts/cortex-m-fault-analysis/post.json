@@ -8,5 +8,10 @@
   "tags": ["Cortex-M", "HardFault", "异常", "栈回溯", "TRACE32"],
   "series": "debugging-notes",
   "readingTime": 19,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:cortex-m-fault-analysis:2026-07-06"
+  },
   "draft": false
 }

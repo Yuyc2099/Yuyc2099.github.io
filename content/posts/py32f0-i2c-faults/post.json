@@ -8,5 +8,10 @@
   "tags": ["PY32F0", "Cortex-M0+", "I2C", "调试", "可靠性"],
   "series": "debugging-notes",
   "readingTime": 13,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:py32f0-i2c-faults:2026-07-21"
+  },
   "draft": false
 }

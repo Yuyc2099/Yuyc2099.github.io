@@ -1,5 +1,11 @@
 # 嵌入式软件缺陷深入分析：内存、栈与 RTOS 同步
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:embedded-software-fault-analysis:2026-06-25
+-->
+
 上一篇 [Cortex-M 异常分析](/articles/cortex-m-fault-analysis/) 介绍了异常栈帧、HardFault 定位和常见软件缺陷。本篇继续深入软件侧：不仅关注最终进入了哪一种 fault，还要追查是哪一次越界写、错误释放或同步操作破坏了系统状态。
 
 文中的同步原理适用于常见 RTOS，接口和部分行为以 RT-Thread 为例。不同 RT-Thread 版本以及其他 RTOS 的配置项、递归互斥量和 Hook 接口可能不同，使用时应以目标工程的头文件和内核源码为准。

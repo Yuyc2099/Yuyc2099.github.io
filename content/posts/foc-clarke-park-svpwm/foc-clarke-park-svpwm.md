@@ -1,5 +1,11 @@
 # FOC 坐标变换与 SVPWM 基础
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:foc-clarke-park-svpwm:2026-07-30
+-->
+
 ## 1. 范围与约定
 
 FOC（Field-Oriented Control，磁场定向控制）通过坐标变换，把三相交流量转换成旋转坐标系中的直流量，使磁链和转矩能够分别控制。本文整理以下内容：

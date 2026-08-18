@@ -8,5 +8,10 @@
   "tags": ["FOC", "Clarke变换", "Park变换", "SVPWM", "电机控制"],
   "series": "motor-control",
   "readingTime": 12,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:foc-clarke-park-svpwm:2026-07-30"
+  },
   "draft": false
 }

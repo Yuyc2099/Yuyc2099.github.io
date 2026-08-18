@@ -1,5 +1,11 @@
 # 利用返回地址定位调用来源：Log、MAP 与 AXF 联合调试
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:callstack-debug:2026-06-29
+-->
+
 ## 1. 方法的用途与边界
 
 嵌入式系统中，系统重启、工作模式切换等关键函数可能有多个调用入口。只记录函数名只能确认“发生了什么”，很难回答“由哪一处代码触发”。一种低成本做法是在目标函数中记录当前返回地址，再结合本次构建生成的 `.map` 和 `.axf` 文件定位调用来源。

@@ -13,6 +13,21 @@ marked.use({
 const escapeHtml = (value) =>
   value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
+const renderAttributionHead = (attribution) => {
+  if (!attribution) return "";
+  const { author, sourceRepository, sourceId } = attribution;
+  return `  <meta name="author" content="${escapeHtml(author)}">
+  <meta name="dcterms.source" content="${escapeHtml(sourceRepository)}">
+  <meta name="dcterms.identifier" content="${escapeHtml(sourceId)}">
+  <!--
+  Article attribution
+  Author: ${escapeHtml(author)}
+  Source-Repository: ${escapeHtml(sourceRepository)}
+  Source-ID: ${escapeHtml(sourceId)}
+  -->
+`;
+};
+
 const exists = async (file) => {
   try {
     await access(file);
@@ -59,13 +74,13 @@ const renderMarkdown = (markdown) => {
   };
 };
 
-const shell = ({ title, description, pathPrefix, pageClass, body }) => `<!doctype html>
+const shell = ({ title, description, pathPrefix, pageClass, attribution, body }) => `<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="${escapeHtml(description)}">
-  <meta name="theme-color" content="#f4f2ed">
+${renderAttributionHead(attribution)}  <meta name="theme-color" content="#f4f2ed">
   <title>${escapeHtml(title)}</title>
   <link rel="icon" href="${pathPrefix}assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="${pathPrefix}assets/site.css">
@@ -237,6 +252,7 @@ const articlePages = posts.map(({ directoryName, metadata, markdown, hasImages }
     description: metadata.summary,
     pathPrefix: "../../",
     pageClass: "article-page",
+    attribution: metadata.attribution,
     body: `<div class="reading-progress" aria-hidden="true"></div>
     ${header("../../")}
     <main class="article-shell">

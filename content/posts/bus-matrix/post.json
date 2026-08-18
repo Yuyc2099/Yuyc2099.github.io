@@ -8,5 +8,10 @@
   "tags": ["STM32F4", "Cortex-M4", "AHB", "APB", "DMA"],
   "series": "cortex-m-architecture",
   "readingTime": 14,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:bus-matrix:2026-06-23"
+  },
   "draft": false
 }

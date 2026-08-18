@@ -1,5 +1,11 @@
 # 设计模式：软件设计原则与 GoF 23 种模式
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:design-patterns:2026-06-25
+-->
+
 ## 1. 软件设计原则
 
 **一姐弟合理单开**

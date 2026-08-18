@@ -8,5 +8,10 @@
   "tags": ["定点数", "Q格式", "C语言", "嵌入式", "数值计算"],
   "series": "embedded-algorithms",
   "readingTime": 18,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:fixed-point-q-format:2026-07-22"
+  },
   "draft": false
 }

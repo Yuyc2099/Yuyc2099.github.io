@@ -8,5 +8,10 @@
   "tags": ["FIFO", "环形缓冲区", "数据结构", "C语言", "嵌入式"],
   "series": "embedded-algorithms",
   "readingTime": 8,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:high-performance-ring-fifo:2026-08-04"
+  },
   "draft": false
 }

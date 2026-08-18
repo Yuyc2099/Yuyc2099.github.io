@@ -1,5 +1,11 @@
 # 裸机架构笔记：轮询状态机、OSAL、LTX、Protothreads、QP/C 与 setjmp/longjmp
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:bare-metal-event-driven-architectures:2026-07-22
+-->
+
 裸机程序没有线程调度器，但同样要同时处理按键、传感器、通信、显示和超时。不同架构的区别，主要不在于提供了哪些 API，而在于怎样保存执行状态、怎样把事件交给业务代码，以及一段流程等待后怎样继续运行。
 
 ---

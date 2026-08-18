@@ -8,5 +8,10 @@
   "tags": ["Cortex-M", "GCC", "ELF", "Linker", "Startup"],
   "series": "embedded-toolchain",
   "readingTime": 24,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:cortex-m-compilation:2026-06-25"
+  },
   "draft": false
 }

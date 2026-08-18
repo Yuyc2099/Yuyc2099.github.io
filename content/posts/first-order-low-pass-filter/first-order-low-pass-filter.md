@@ -1,5 +1,11 @@
 # 一阶低通滤波与指数平滑
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:first-order-low-pass-filter:2026-07-22
+-->
+
 ## 1. 两种算法
 
 本文比较两种常见的离散低通滤波算法：

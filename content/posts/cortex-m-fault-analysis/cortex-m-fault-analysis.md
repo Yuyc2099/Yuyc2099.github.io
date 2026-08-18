@@ -1,5 +1,11 @@
 # Cortex-M 异常分析：从栈帧到 HardFault 定位
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:cortex-m-fault-analysis:2026-07-06
+-->
+
 虽然 M0/M0+ 与 M3/M4 的异常体系不同（M3/M4 有 MemManage、BusFault 和 UsageFault，M0/M0+ 主要汇总到 HardFault），但异常入口的基本栈帧和常见软件缺陷具有共通性。本文先介绍通用的现场分析方法，再补充两类内核的异常差异。
 
 ---

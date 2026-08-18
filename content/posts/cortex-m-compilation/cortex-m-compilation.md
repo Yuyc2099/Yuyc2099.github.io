@@ -1,5 +1,11 @@
 # Cortex-M 编译与链接：从源代码到固件镜像
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:cortex-m-compilation:2026-06-25
+-->
+
 ## 1. 阅读范围
 
 这篇文章讨论的是 **Cortex-M 工程的编译、链接与启动流程**，重点是源码如何变成可烧录固件，以及代码和数据怎样进入 Flash、RAM。严格来说，它不是一篇完整的“编译原理”课程：词法分析、语法分析、类型系统和编译器优化算法只做必要介绍。

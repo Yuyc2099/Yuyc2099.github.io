@@ -1,5 +1,11 @@
 # STM32F4 总线架构：Cortex-M4、AHB 与 APB
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:bus-matrix:2026-06-23
+-->
+
 ## 1. 阅读范围与边界
 
 本文以 **STM32F4 系列常见的 Cortex-M4 系统架构**为主线，解释内核总线接口、片上 Bus Matrix、Flash 访问、DMA，以及 AHB 与 APB 之间的关系。

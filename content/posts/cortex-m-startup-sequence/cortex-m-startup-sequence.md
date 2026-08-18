@@ -1,5 +1,11 @@
 # Cortex-M 内核启动流程解析
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:cortex-m-startup-sequence:2026-08-18
+-->
+
 ## 1. 文档范围
 
 本文结合一个 Cortex-M0+ 工程实例，说明 Cortex-M 内核从芯片复位到进入应用程序的完整过程，重点解析 `__Vectors` 之后的执行路径。复位读取初始栈指针和复位入口、执行 `Reset_Handler`、初始化 C 运行环境等主流程在 Cortex-M 系列中基本一致；Fault 向量、VTOR 支持和外部中断数量等细节以具体内核及芯片为准。

@@ -8,5 +8,10 @@
   "tags": ["电机控制", "转速估算", "反电动势", "SVPWM", "永磁体磁链"],
   "series": "motor-control",
   "readingTime": 5,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:motor-speed-estimation-back-emf:2026-08-17"
+  },
   "draft": false
 }

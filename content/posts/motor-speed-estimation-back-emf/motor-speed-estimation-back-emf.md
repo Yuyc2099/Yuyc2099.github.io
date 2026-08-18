@@ -1,5 +1,11 @@
 # 电机最高转速估算与反电动势测量
 
+<!--
+Author: Yuyc2099
+Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
+Source-ID: yuyc2099:motor-speed-estimation-back-emf:2026-08-17
+-->
+
 ## 1. 软件转速限制
 
 ```c
