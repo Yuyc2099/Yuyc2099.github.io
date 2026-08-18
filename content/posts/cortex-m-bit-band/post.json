@@ -1,0 +1,17 @@
+{
+  "title": "Cortex-M 位段操作",
+  "slug": "cortex-m-bit-band",
+  "date": "2026-08-18",
+  "updated": "2026-08-18",
+  "summary": "介绍 Cortex-M 位段操作的地址映射、别名地址计算方式，以及单 bit 原子访问能够解决和不能解决的问题。",
+  "category": "kernel",
+  "tags": ["Cortex-M", "Bit-band", "位段操作", "原子操作"],
+  "series": "cortex-m-architecture",
+  "readingTime": 2,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:cortex-m-bit-band:2026-08-18"
+  },
+  "draft": false
+}
