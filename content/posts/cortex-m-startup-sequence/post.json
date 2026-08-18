@@ -1,0 +1,12 @@
+{
+  "title": "Cortex-M 内核启动流程解析",
+  "slug": "cortex-m-startup-sequence",
+  "date": "2026-08-18",
+  "updated": "2026-08-18",
+  "summary": "从向量表、复位入口和 SystemInit 出发，梳理 Cortex-M 内核进入 C 运行环境与中断处理的完整过程。",
+  "category": "kernel",
+  "tags": ["Cortex-M", "Startup", "Vector Table", "CMSIS", "Arm Compiler"],
+  "series": "embedded-toolchain",
+  "readingTime": 20,
+  "draft": false
+}
