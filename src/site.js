@@ -20,6 +20,28 @@ if (filterBtns.length) {
   });
 }
 
+// Post title search
+document.querySelectorAll("[data-post-search]").forEach((input) => {
+  const scope = input.closest("[data-post-search-scope]");
+  const links = [...scope.querySelectorAll(".all-posts-list a")];
+  const count = scope.closest(".all-posts-card")?.querySelector("[data-post-search-count]");
+  const empty = scope.querySelector("[data-post-search-empty]");
+
+  input.addEventListener("input", () => {
+    const query = input.value.trim().toLocaleLowerCase("zh-CN");
+    let visible = 0;
+
+    links.forEach((link) => {
+      const show = link.textContent.toLocaleLowerCase("zh-CN").includes(query);
+      link.hidden = !show;
+      if (show) visible++;
+    });
+
+    if (count) count.textContent = String(visible).padStart(2, "0");
+    empty.hidden = visible > 0;
+  });
+});
+
 const themeToggle = document.querySelector(".theme-toggle");
 
 themeToggle?.addEventListener("click", () => {

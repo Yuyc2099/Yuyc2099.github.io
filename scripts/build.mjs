@@ -187,10 +187,15 @@ const renderAllPostLinks = (prefix = "", currentSlug = "") =>
 const allPosts = `<nav class="all-posts-card" aria-label="全部文章">
   <div class="all-posts-heading">
     <h2>全部文章</h2>
-    <span>${String(posts.length).padStart(2, "0")}</span>
+    <span data-post-search-count aria-live="polite">${String(posts.length).padStart(2, "0")}</span>
   </div>
-  <div class="all-posts-list">
+  <div data-post-search-scope>
+    <input class="post-search-input" type="search" placeholder="搜索标题" aria-label="搜索文章标题"
+        aria-controls="home-all-posts-list" autocomplete="off" data-post-search>
+    <div class="all-posts-list" id="home-all-posts-list">
     ${renderAllPostLinks()}
+    </div>
+    <p class="all-posts-empty" data-post-search-empty hidden>未找到匹配文章</p>
   </div>
 </nav>`;
 
@@ -247,9 +252,12 @@ const articlePages = posts.map(({ directoryName, metadata, markdown, hasImages }
           <aside class="toc"><div class="toc-inner">
             <p>本文目录</p>
             <nav>${tableOfContents}</nav>
-            <div class="toc-all-posts">
+            <div class="toc-all-posts" data-post-search-scope>
               <p>全部文章</p>
-              <nav class="all-posts-list" aria-label="全部文章">${renderAllPostLinks("../../", metadata.slug)}</nav>
+              <input class="post-search-input" type="search" placeholder="搜索标题" aria-label="搜索文章标题"
+                  aria-controls="article-all-posts-list" autocomplete="off" data-post-search>
+              <nav class="all-posts-list" id="article-all-posts-list" aria-label="全部文章">${renderAllPostLinks("../../", metadata.slug)}</nav>
+              <p class="all-posts-empty" data-post-search-empty hidden>未找到匹配文章</p>
             </div>
           </div></aside>
         </div>
