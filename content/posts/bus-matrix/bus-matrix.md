@@ -6,7 +6,7 @@ Source-Repository: https://github.com/Yuyc2099/Yuyc2099.github.io
 Source-ID: yuyc2099:bus-matrix:2026-06-23
 -->
 
-## 1. 阅读范围与边界
+## 1. 前言
 
 本文以 **STM32F4 系列常见的 Cortex-M4 系统架构**为主线，解释内核总线接口、片上 Bus Matrix、Flash 访问、DMA，以及 AHB 与 APB 之间的关系。
 
@@ -34,15 +34,7 @@ Cortex-M4 对外提供三个 32-bit AHB-Lite 接口，并为内核私有外设�
 
 ICode 和 DCode 虽然访问相同的 Code 地址区，却是两条独立接口：取指通常走 ICode，程序读取 Flash 中的常量通常走 DCode。访问 SRAM 或普通外设时，则使用 System 接口。
 
-```text
-                         Cortex-M4
-                 ┌─────────────────────┐
-Code 区取指  ◄────│ ICode               │
-Code 区数据  ◄────│ DCode               │
-SRAM/外设    ◄────│ System              │
-NVIC/SCB     ◄────│ PPB                 │
-                 └─────────────────────┘
-```
+![Cortex-M3/M4 各总线接口与存储器地址区域的对应关系](./images/cortex-m-bus-interfaces.png)
 
 接口由访问地址和访问类型决定，不是由编译器直接“选择总线”。链接脚本通过决定代码和数据的地址，间接决定最终使用哪条接口。
 
@@ -52,15 +44,17 @@ NVIC/SCB     ◄────│ PPB                 │
 
 Cortex-M4 提供接口，但不规定 MCU 必须采用哪一种片上互联。STM32F4 通常使用多层 AHB Bus Matrix，把多个主设备连接到多个从设备。
 
-```text
-主设备                         Bus Matrix                  从设备
-─────────────────            ────────────              ───────────────
-Cortex-M4 ICode  ───────────►                            Flash 接口
-Cortex-M4 DCode  ───────────►                            SRAM
-Cortex-M4 System ───────────►   多层 AHB 互联   ───────► AHB 外设
-DMA memory port  ───────────►                            AHB-APB Bridge
-其他总线主设备   ───────────►                            外部存储接口
-```
+![基于 Cortex-M3/M4 的简单系统总线结构](./images/cortex-m-simple-system.png)
+
+上图展示的是 Cortex-M3/M4 系统的通用组织方式，用于说明 ICode、DCode、System、AHB-Lite、APB 和外设总线桥之间的层次关系，并不是某一款 STM32F4 的精确内部框图。具体 STM32F4 还会加入 DMA 等总线主设备，并通过多层 Bus Matrix 连接 Flash、SRAM、AHB 外设和 AHB-to-APB Bridge。
+
+下面是 STM32F405xx/407xx 和 STM32F415xx/417xx 的实际系统架构。图中的 S0～S7 是 Bus Matrix 接收各总线主设备请求的从端口，M0～M6 是通向 Flash、SRAM、AHB 外设和 FSMC 等从设备的主端口；交点表示对应主从端口之间存在可用路径。
+
+![STM32F405、STM32F407、STM32F415 和 STM32F417 的系统架构](./images/stm32f405-407-415-417-system-architecture.png)
+
+STM32F427xx/429xx 的系统总框图进一步展示了 Bus Matrix 在整颗芯片中的位置：Cortex-M4 的 I-BUS、D-BUS 和 S-BUS，经片上互联连接 ART、Flash、SRAM、FMC、DMA、AHB 外设及 AHB-to-APB Bridge；APB1、APB2 外设以及时钟、电源和复位模块则位于更外层。该图用于建立全局视角，其中 LCD-TFT 仅适用于 STM32F429xx。
+
+![STM32F427 和 STM32F429 系统总框图](./images/stm32f427-429-block-diagram.png)
 
 Bus Matrix 的价值是：多个主设备访问**不同从设备**时，可以并发传输。例如 CPU 从 Flash 取指，同时 DMA 向某块 SRAM 写数据，两条路径可能并行。
 
@@ -84,12 +78,26 @@ AHB-Lite 把地址/控制相位与数据相位分开，连续传输时可以形�
 
 AHB-Lite 接口本身不替 STM32F4 规定 CPU、DMA 和其他主设备的全局优先级。仲裁策略由芯片内部的 Bus Matrix、Bridge 和 DMA 控制器分别实现。
 
-需要区分两层优先级：
+需要区分三层仲裁：
 
 1. **DMA 控制器内部优先级**：决定同一 DMA 控制器内多个 stream/request 的服务顺序，通常可由软件配置。
 2. **Bus Matrix 仲裁**：决定 CPU、DMA 等主设备竞争同一个从设备时的先后，通常不能通过 HAL 的 DMA priority 配置改变。
+3. **AHB-to-APB Bridge 仲裁**：决定 Bus Matrix 公共路径与 DMA direct path 汇聚到同一个 Bridge 后的执行顺序。
 
-ST 的 DMA 应用笔记 AN4031 对其覆盖的 STM32F2/F4/F7 架构描述了 round-robin 仲裁，并给出了并发访问和最坏延迟的分析方法。但具体芯片仍应以对应 Reference Manual 为准，不应写成固定的 `ICode > DCode > DMA1 > DMA2` 优先级链。
+对于本文图示的 STM32F4，Bus Matrix 使用 round-robin。它可以理解为在每个从设备方向分别维护一个轮转状态：
+
+1. **访问不同从设备时**：请求走不同路径，不需要由同一个仲裁器决定先后。
+2. **当前 AHB 事务已经开始时**：后来请求不能中途抢占；若从设备拉低 `HREADY`，当前事务继续占用该路径。
+3. **事务边界仍有多个请求等待时**：仲裁器从上一次获准者之后继续轮询，不固定让 CPU 或 DMA 优先。
+4. **只有一个请求时**：该请求直接获得访问权；双方持续竞争时则轮换机会，避免一方长期饥饿。
+
+例如 CPU 与 DMA1 持续竞争 SRAM1：如果上一笔由 CPU 完成，下一次两者都在等待时通常轮到 DMA1，随后再轮到 CPU。AN4031 给出的标称 round-robin quantum 是一笔 AHB transfer。但 DMA burst，以及 CPU 的多寄存器访问或异常压栈等不可分割序列，可能让当前主设备连续保持若干个 AHB 周期的访问权；`HREADY` 等待还会延长当前 transfer。因此，其他主设备的实际等待时间可能明显超过一个 HCLK 周期。
+
+![五个主设备通过 Bus Matrix 竞争 SRAM 的 round-robin 仲裁](./images/bus-matrix-round-robin-five-masters.png)
+
+上图是 AN4031 给出的五主设备竞争示例。CPU、DMA1、DMA2、USB_HS 和 Ethernet 同时请求同一个 SRAM 从设备时，Bus Matrix 逐笔授予访问权；DMA1 完成一次访问后，其他仍在等待的主设备依次得到机会，随后才再次轮到 DMA1。因此，DMA1 再次获得 SRAM 访问权之前的延迟，等于排在它前面的其他待处理事务耗时之和。
+
+图中所有请求都按单次、无等待传输绘制，所以每个授权时隙表现为一个 AHB cycle，并标出了 `Quantum = 1 AHB cycle`。实际延迟应按前方主设备尚未完成的不可分割传输序列和等待周期计算。
 
 ### 3.3 竞争发生在哪里
 
@@ -102,6 +110,17 @@ ST 的 DMA 应用笔记 AN4031 对其覆盖的 STM32F2/F4/F7 架构描述了 rou
 | CPU 与 DMA 同时访问 APB | 取决于 Bridge 路径 | APB 事务最终需要由 Bridge 串行执行 |
 
 “使用了 DMA”不等于“CPU 一定更快”。DMA 可以释放 CPU 指令执行时间，但仍然消耗存储器、Bridge 和总线带宽。
+
+因此，一次访问的耗时可以粗略理解为：
+
+```text
+Access latency
+    ≈ Target service time
+    + Bus/Bridge transfer time
+    + Arbitration waiting time
+```
+
+最终耗时取决于完整路径中最慢的一环，不能只根据 CPU、AHB 或 APB 的标称频率判断。
 
 ## 4. Flash 取指、常量访问与 ART
 
@@ -120,6 +139,10 @@ ICode 和 DCode 是独立接口，但它们可能汇聚到同一个 Flash 存储
 Cortex-M4 内核本身没有架构级 L1 I-Cache/D-Cache。STM32F4 在 Flash 前加入 ART Accelerator，通过宽 Flash 读取、预取和分支相关的缓存机制降低取指等待。
 
 典型 STM32F4 的 Flash 接口一次可取得较宽的指令行，因此不能把“Flash 配置为 5 wait states”简单理解成“每执行一条指令都等待 5 个 CPU 周期”。顺序代码、跳转代码、常量读取和缓存命中的表现都不同。
+
+![ART 预取对 32 位连续指令执行时序的影响](./images/art-prefetch-sequential-instructions.png)
+
+图中 `@`、`F`、`D`、`E` 分别表示地址请求、取指、译码和执行。关闭预取时，处理器用完当前指令行后才等待下一行返回；开启预取后，Flash 可以在流水线执行当前指令行的同时读取后续指令行，从而掩盖顺序代码中的大部分等待时间。如果发生分支，且目标指令不在当前指令行或已预取的指令行中，处理器仍需等待目标指令行从 Flash 返回，等待时间可能至少达到所配置的 Flash wait states。
 
 > **M0/M3 差异：** M0 和 M3 内核同样不自带 Cortex-M7 那样的 L1 Cache。具体 MCU 是否具有 Flash Prefetch、厂商缓存或其他加速器，与采用 M0、M3 还是 M4 不能直接画等号。
 
@@ -153,7 +176,13 @@ void time_critical_handler(void) {
 }
 ```
 
-部分 STM32F4 带有 CCM data RAM。它通常不在主 Bus Matrix 中，DMA 不能像访问普通 SRAM 那样访问它，也不能在未查手册的情况下假定它适合作为可执行代码区或 DMA buffer。
+如果目标是让关键中断执行期间完全不访问 Flash，其直接或间接调用的函数、literal 常量和跳转表也需要一起放入可执行 SRAM。
+
+![STM32F4 系统架构中的 Flash 接口与 CCM Data RAM 总线连接](./images/stm32f4-flash-interface-connections.png)
+
+图中的 CCM Data RAM 只直接连接 Cortex-M4 的 D-bus，没有连接 ICode，并且不属于主 Bus Matrix。因此，内核无法从 CCM 取指，DMA 也无法访问它。
+
+Cortex-M4 从 Code 区取指时使用 ICode，而这些 STM32F4 的系统互联没有提供从 ICode 到 CCM Data RAM 的访问路径。因此，即使链接器能够把函数字节放入 CCM，内核也无法从中取指执行；`.ramfunc` 应放入可执行的 SRAM1/2/3。这个限制来自具体 STM32F4 的总线连接方式，不是 Cortex-M4 架构对所有 CCM 的统一规定。
 
 ## 5. AHB 与 APB 如何协同
 
@@ -164,26 +193,66 @@ APB 面向低带宽、低功耗寄存器外设。对 APB 协议来说，Bridge �
 标准 APB 访问至少包含两个 PCLK 周期：
 
 ```text
-                 Setup                 Access
-PSEL               1                      1
-PENABLE             0                      1
-地址/控制          建立                   保持
-PREADY              -                 1 时完成
+PCLK edge      T0            T1            T2
+               |             |             |
+Phase          |    Setup    |   Access    |
+Sample PREADY                              1
+Outcome                                    Complete
 ```
 
-如果外设通过 `PREADY` 插入等待，Access phase 会继续延长。这里的“两周期”是 APB 时钟周期，不能直接写成两个 CPU 周期；还要考虑 HCLK/PCLK 比例和 Bridge 开销。
+| 信号或动作 | `T0 → T1`：Setup phase | `T1 → T2`：Access phase |
+|------------|-------------------------|--------------------------|
+| `PSEL` | 置 1，选中目标外设 | 保持为 1 |
+| `PENABLE` | 保持为 0 | 置 1，表示进入访问阶段 |
+| 地址、方向和写数据 | 在 T0 后建立 | 整个阶段保持稳定 |
+| `PREADY` | 不用于判定完成 | 在 T2 边沿采样；为 1 时传输完成 |
+| `PRDATA` | 尚不采样 | 读传输完成时在 T2 边沿采样 |
+
+如果 T2 边沿采样到 `PREADY = 0`，Access phase 不会结束，所有控制信号继续保持，直到某个后续 PCLK 边沿采样到 `PREADY = 1`：
+
+```text
+PCLK edge      T0            T1            T2            T3
+               |             |             |             |
+Phase          |    Setup    |   Access    |   Access    |
+Sample PREADY                              0             1
+Outcome                                    Wait          Complete
+```
+
+图中的 `PCLK edge` 表示 PCLK 有效边沿，`Phase` 表示当前协议阶段，`Sample PREADY` 表示在对应边沿采样到的 `PREADY` 值，`Outcome` 表示采样结果。`Setup` 是建立阶段，`Access` 是访问阶段，`Wait` 表示继续等待，`Complete` 表示本次传输完成。
+
+这里的“两周期”是两个完整的 APB 时钟周期，不能直接写成两个 CPU 周期；实际耗时还要考虑 HCLK/PCLK 比例、Bridge 开销和外设插入的等待周期。
 
 ### 5.2 Bridge 上仍可能存在竞争
 
-“APB 协议没有多主仲裁”不等于“STM32F4 的 APB 路径不存在竞争”。部分 STM32F4 的 AHB-to-APB Bridge 具有来自 Bus Matrix 和 DMA direct path 的多个上游入口，因此 Bridge 自身需要仲裁 CPU 与 DMA 请求。
+“APB 协议没有多主仲裁”不等于“STM32F4 的 APB 路径不存在竞争”。以第 2.2 节的 STM32F427xx/429xx 系统总框图为例，CPU 访问 APB1 外设时，请求经 S-BUS 和 Bus Matrix 到达 AHB/APB1 Bridge；DMA1 服务 APB1 外设时，则可以通过图中标出的 DMA1 direct path 到达同一个 Bridge。
 
 ```text
-CPU/System ──► Bus Matrix ──►┐
-                             ├──► AHB-to-APB Bridge ──► APB 外设
-DMA direct path ────────────►┘
+CPU S-BUS -> Bus Matrix ------------------+
+                                          +-> AHB/APB1 Bridge -> APB1 peripherals
+DMA1 peripheral port -> Direct path ------+
 ```
 
-Bridge 正在完成 APB 事务时，请求该 Bridge 的主设备需要等待；与此同时，其他主设备仍可能通过 Bus Matrix 访问 Flash 或 SRAM。
+例如，CPU 正在访问 TIM2，而 DMA1 同时访问 USART2。虽然目标是两个不同的 APB1 外设，但两条访问路径最终汇聚到同一个 AHB/APB1 Bridge，仍需由 Bridge 决定先后并逐笔执行。APB2 侧同理，CPU 与 DMA2 的请求可能在 AHB/APB2 Bridge 汇聚。
+
+ST 的 AN4031 在 AHB-to-APB Bridge 仲裁一节中明确说明，这里的仲裁采用 round-robin，轮询单位是一笔完整的 APB transfer，而不是固定的 CPU 优先级或严格的先来先到队列。可以按下面的规则理解：
+
+1. **Bridge 空闲且只有一个请求时**：该请求直接开始，因此表面上看起来像“先到先执行”。
+2. **一笔 APB 事务已经开始时**：后来请求不能抢占，只能等待当前事务完成；`PREADY = 0` 延长 Access phase 时也一样。
+3. **事务边界仍有多个请求等待时**：Bridge 根据 round-robin 的当前轮转位置选择下一条路径，不固定让 CPU 或 DMA 优先。
+4. **双方持续请求时**：访问机会按事务轮换，避免其中一方长期得不到服务。AN4031 给出的 DMA 外设端口最大附加等待上界是一笔 APB transfer。
+
+Bus Matrix 与 AHB-to-APB Bridge 遵循相同的“事务结束后再轮换”原则，但仲裁范围和轮询单位不同：
+
+| 仲裁位置 | 竞争对象 | 轮询单位 | 何时发生竞争 |
+|----------|----------|----------|--------------|
+| Bus Matrix | CPU、DMA 等 AHB 主设备 | 一笔 AHB transfer | 多个主设备访问同一个 AHB 从设备 |
+| AHB-to-APB Bridge | Bus Matrix 公共路径与 DMA direct path | 一笔 APB transfer | 多条上游路径访问同一个 APB Bridge |
+
+两级仲裁器的轮转状态彼此独立。CPU 访问 APB 外设时，可能先在 Bus Matrix 获得通往 Bridge 的路径，随后还要等待 Bridge；DMA direct path 可以绕过前一级 Bus Matrix 仲裁，但仍需参加 Bridge 仲裁。因此，在 Bus Matrix 获胜不代表能够立即开始 APB 事务。
+
+因此，如果 CPU 已经开始访问 TIM2，随后 DMA1 请求访问 USART2，CPU 会先完成当前事务，DMA1 再获得机会；反过来，如果 Bridge 空闲时只有 DMA1 请求到达，则 DMA1 可以先开始。这里没有中途抢占。还要注意，CPU 请求需先经过 Bus Matrix，而 DMA1 可以走 direct path，所以“软件中谁先发起”并不一定等于“谁先到达 Bridge”。Bus Matrix 和 Bridge 各自执行独立的 round-robin 仲裁。
+
+Bridge 正在完成一笔 APB 事务时，其他请求该 Bridge 的主设备需要等待；与此同时，其他主设备仍可能通过 Bus Matrix 访问 Flash 或 SRAM。
 
 ### 5.3 减少不必要的寄存器事务
 
@@ -215,12 +284,6 @@ STM32F4 的 GPIO 通常挂在 AHB，而不是 APB，因此不应使用 GPIO 寄�
 | `.bss` | Flash 不保存内容 | 启动时在 SRAM 清零 | System |
 | `.ramfunc` | 通常从 Flash 加载 | 配置正确时在 SRAM 执行 | 取指走 System |
 
-```c
-/* 启动代码的等效逻辑，符号名称由链接脚本决定 */
-memcpy(&_sdata, &_sidata, &_edata - &_sdata);
-memset(&_sbss, 0, &_ebss - &_sbss);
-```
-
 `.bss` 只在镜像中记录地址和大小，不需要从 Flash 搬运初始化内容。
 
 ### 6.1 向量表重定位
@@ -230,75 +293,8 @@ memset(&_sbss, 0, &_ebss - &_sbss);
 - 向量表在 Code 区：向量读取使用 ICode。
 - 向量表在 SRAM/System 区：向量读取使用 System 接口。
 
-修改向量表内容、更新 `VTOR` 或紧接着使能异常时，需要按照 Cortex-M4 编程手册要求使用合适的内存屏障，保证新配置在异常发生前生效。
+修改向量项后若立即使能对应异常，应在两者之间执行 `DMB`。切换 `VTOR` 时，通常先屏蔽中断并完成向量表写入，写入 `VTOR` 后执行 `DSB`，再恢复中断；是否额外执行 `ISB` 可按所用启动框架的约定处理。
 
-## 7. DMA、缓存与内存屏障
+## 7. 非对齐访问对总线的影响
 
-### 7.1 Cortex-M4 没有通用数据缓存一致性问题
-
-Cortex-M4 内核没有 Cortex-M7 那样的架构级 L1 D-Cache。对常见 STM32F4 来说，DMA 写入普通 SRAM 后，CPU 不需要执行 D-Cache invalidate；DMA 读取普通 SRAM 前，也不需要执行 D-Cache clean。
-
-如果数据异常，更常见的检查方向是：
-
-- 是否等待 DMA 完成后才读取 buffer。
-- buffer 是否位于该 DMA 可以访问的内存。
-- DMA 数据宽度、地址递增和传输长度是否正确。
-- CPU 与 DMA 是否同时拥有同一 buffer 的写权限。
-- 用作状态同步的变量是否受到编译器优化影响。
-
-`DMB` 和 `DSB` 用于约束内存访问顺序或等待先前事务完成，不等同于“刷新缓存”。在 DMA 所有权切换、外设配置完成后立即触发操作等场景中，可以根据芯片和 Cortex-M4 编程手册要求使用屏障。
-
-> **M0/M3 差异：** 常见 M0 和 M3 内核同样没有架构级 D-Cache。具体芯片若额外实现缓存或特殊存储接口，仍应按芯片手册处理。
-
-## 8. 常见调试问题
-
-### 8.1 非对齐访问
-
-Cortex-M4 支持部分非对齐的普通内存访问，但不是所有指令和所有内存类型都支持：
-
-- `LDM`、`STM`、`LDRD`、`STRD` 等指令对对齐有额外要求。
-- Device/Strongly-ordered 区域不应依赖非对齐访问。
-- 设置 `CCR.UNALIGN_TRP` 后，可把部分非对齐访问转为 UsageFault。
-- 把任意 `uint8_t *` 强转成更宽指针仍可能产生未定义行为或 Fault。
-
-> **M0/M3 差异：** M0 对非对齐访问的限制更严格；M3 与 M4 的处理方式基本接近。
-
-### 8.2 BusFault 与 Lockup
-
-访问未映射地址、从不可访问区域取指，或总线从设备返回错误，都可能产生 BusFault。定位时应检查：
-
-- `CFSR` 中的 BusFault 状态位。
-- `BFARVALID` 是否置位；只有有效时才能把 `BFAR` 当作故障地址。
-- `HFSR.FORCED` 是否表示可配置 Fault 已升级为 HardFault。
-
-BusFault handler 内再次产生无法处理的 Fault，通常会先升级为 HardFault；只有在 NMI 或 HardFault handler 中再次发生 HardFault，处理器才会进入 Lockup。Lockup 可以通过复位或调试器处理，不能简单描述成“BusFault handler 出错就只能复位”。
-
-### 8.3 外设时钟未使能
-
-访问外设寄存器前必须先使能对应总线/外设时钟，并在必要时确认时钟写入已经生效。未使能时钟后的读取值、写入效果或错误响应属于芯片实现，不能统一描述为 `PREADY` 永远不拉高。
-
-### 8.4 读-改-写竞争
-
-`register |= mask` 通常由一次读取和一次写回组成。如果中断、另一个执行上下文或硬件在两者之间修改同一寄存器，写回可能覆盖新值。
-
-这个问题来自非原子的 read-modify-write 序列，并不是 APB 两阶段传输特有的问题。应优先使用专用的置位/清零寄存器、原子操作或受保护的临界区。
-
-### 8.5 DMA overrun/underrun
-
-外设产生 DMA request 后，DMA 仍需经过内部仲裁、Bus Matrix、Bridge 和目标存储器。带宽不足或最坏服务延迟过长可能导致 overrun/underrun。
-
-排查时应检查 DMA 映射、stream 优先级、FIFO/burst、外设数据宽度、目标存储器和并发主设备，而不是笼统归因于“REQ 与数据没有对齐”。
-
-## 9. 总结
-
-一次访问的速度首先受目标器件影响：Flash 较慢，读取可能需要等待周期，编程和擦除所需时间更长；片上 SRAM 通常支持零等待访问，但一次读写仍然需要总线周期。缓存命中可以避免真正访问 Flash，从而同时减少器件等待和总线请求，但不能加快 Flash 的编程或擦除。
-
-Bus Matrix 的主要价值，是允许多个主设备并行访问不同的从设备。例如 CPU 从 Flash 取指、DMA 向 SRAM 写数据，两条路径互不冲突时可以同时工作。如果多个请求汇聚到同一个从设备、同一个端口或同一条共享路径，则必须经过仲裁并排队。即使目标是不同的 APB 外设，也可能因为共享同一个 AHB-to-APB Bridge 而发生竞争。
-
-因此，一次访问的耗时可以粗略理解为：
-
-```text
-访问延迟 ≈ 器件服务时间 + 总线与 Bridge 传输时间 + 竞争排队时间
-```
-
-最终速度取决于完整路径中最慢的一环，而不只是 CPU 或总线的标称频率。DMA 可以把数据搬运工作从 CPU 转移出去，但仍会占用总线和存储器带宽，因此不一定让整个系统更快。
+对内核支持的普通内存非对齐半字或字访问，Cortex-M4 可能将其拆成多次总线传输，因此会增加访问延迟、占用更多总线带宽，并可能加剧与 DMA 等主设备之间的竞争。不能假设一次非对齐半字或字访问只对应一笔 AHB transfer。
