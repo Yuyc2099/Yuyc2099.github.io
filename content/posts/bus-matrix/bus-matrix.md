@@ -140,6 +140,12 @@ Cortex-M4 内核本身没有架构级 L1 I-Cache/D-Cache。STM32F4 在 Flash 前
 
 典型 STM32F4 的 Flash 接口一次可取得较宽的指令行，因此不能把“Flash 配置为 5 wait states”简单理解成“每执行一条指令都等待 5 个 CPU 周期”。顺序代码、跳转代码、常量读取和缓存命中的表现都不同。
 
+![32-bit 逐字读取与 ART 128-bit 指令行读取的概念对照](./images/art-128bit-line-fetch-comparison.svg)
+
+上图使用四条连续的 32-bit 指令 `I1~I4` 做简化对照：`Req` 表示取指请求，`Flash wait` 表示从发起 Flash 读取到数据返回之间的等待窗口，`CPU delivery` 表示 ART 向内核提供指令。如果假设每次 Flash 访问只返回一条 32-bit 指令，取完四条需要四次读取和四个等待窗口；STM32F4 的一次 128-bit Flash 读取可以同时带回四条 32-bit 指令，后三条可由该指令行提供，因而不再各自发起 Flash 读取，相当于减少了三个额外的 Flash 等待窗口。
+
+> 这是为说明“宽指令行复用”的概念图，不表示 STM32F4 可在 32-bit 和 128-bit 物理 Flash 读取模式之间切换。实际 Thumb-2 指令可以是 16 bit 或 32 bit；RM0090 说明一条 128-bit Flash 读取线可容纳四条 32-bit 指令或八条 16-bit 指令。跨指令行、分支未命中、DCode 常量访问和其他竞争都可能带来额外等待。
+
 ![ART 预取对 32 位连续指令执行时序的影响](./images/art-prefetch-sequential-instructions.png)
 
 图中 `@`、`F`、`D`、`E` 分别表示地址请求、取指、译码和执行。关闭预取时，处理器用完当前指令行后才等待下一行返回；开启预取后，Flash 可以在流水线执行当前指令行的同时读取后续指令行，从而掩盖顺序代码中的大部分等待时间。如果发生分支，且目标指令不在当前指令行或已预取的指令行中，处理器仍需等待目标指令行从 Flash 返回，等待时间可能至少达到所配置的 Flash wait states。

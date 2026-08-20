@@ -2,7 +2,7 @@
   "title": "STM32F4 总线架构：Cortex-M4、AHB 与 APB",
   "slug": "bus-matrix",
   "date": "2026-06-23",
-  "updated": "2026-08-19",
+  "updated": "2026-08-20",
   "summary": "从 Cortex-M4 的 ICode、DCode 和 System 接口出发，理解 STM32F4 的 Bus Matrix、Flash、DMA 与 AHB/APB 访问路径。",
   "category": "kernel",
   "tags": ["STM32F4", "Cortex-M4", "AHB", "APB", "DMA"],
