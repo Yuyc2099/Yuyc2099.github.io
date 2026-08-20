@@ -64,7 +64,7 @@ if (progress) {
 
 const tocLinks = [...document.querySelectorAll(".toc-link")];
 const sections = tocLinks
-  .map((link) => document.querySelector(link.getAttribute("href")))
+  .map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))))
   .filter(Boolean);
 
 if (sections.length) {
