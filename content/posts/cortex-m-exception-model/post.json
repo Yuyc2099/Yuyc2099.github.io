@@ -1,0 +1,17 @@
+{
+  "title": "Cortex-M 异常体系：M0/M0+ 与 M3/M4 对比",
+  "slug": "cortex-m-exception-model",
+  "date": "2026-08-20",
+  "updated": "2026-08-21",
+  "summary": "对比 Cortex-M0/M0+ 与 Cortex-M3/M4 的异常编号、fault 分类和错误升级关系，并介绍 PendSV 上下文切换与 SysTick 定时。",
+  "category": "kernel",
+  "tags": ["Cortex-M", "HardFault", "MemManage", "BusFault", "UsageFault", "PendSV", "SysTick"],
+  "series": "cortex-m-architecture",
+  "readingTime": 8,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:cortex-m-exception-model:2026-08-20"
+  },
+  "draft": false
+}
