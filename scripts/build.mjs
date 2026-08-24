@@ -13,6 +13,9 @@ marked.use({
 const escapeHtml = (value) =>
   value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
+const renderUpdatedTime = ({ date, updated = date }) =>
+  `<time datetime="${updated}">更新于 ${updated.replaceAll("-", ".")}</time><span data-relative-time="${updated}"></span>`;
+
 const renderAttributionHead = (attribution) => {
   if (!attribution) return "";
   const { author, sourceRepository, sourceId } = attribution;
@@ -147,13 +150,13 @@ if (!posts.length) throw new Error("No published articles found.");
 const postCards = posts
   .map(({ metadata }) => {
     const categoryName = categoryNames[metadata.category] ?? metadata.category;
-    const displayDate = metadata.date.replaceAll("-", ".");
     return `<a class="post-card" href="articles/${metadata.slug}/"
-        data-category="${escapeHtml(metadata.category)}">
+        data-category="${escapeHtml(metadata.category)}" data-date="${metadata.date}"
+        data-updated="${metadata.updated ?? metadata.date}">
         <div class="post-card-body">
           <div class="post-meta">
             <span class="post-category">${escapeHtml(categoryName)}</span>
-            <time datetime="${metadata.date}">${displayDate}</time>
+            ${renderUpdatedTime(metadata)}
           </div>
           <h3>${escapeHtml(metadata.title)}</h3>
           <p>${escapeHtml(metadata.summary)}</p>
@@ -195,7 +198,8 @@ const renderAllPostLinks = (prefix = "", currentSlug = "") =>
   posts
     .map(({ metadata }) => {
       const current = metadata.slug === currentSlug ? ' aria-current="page"' : "";
-      return `<a href="${prefix}articles/${metadata.slug}/"${current}>${escapeHtml(metadata.title)}</a>`;
+      return `<a href="${prefix}articles/${metadata.slug}/" data-date="${metadata.date}"
+          data-updated="${metadata.updated ?? metadata.date}"${current}>${escapeHtml(metadata.title)}</a>`;
     })
     .join("\n");
 
@@ -224,6 +228,10 @@ const home = shell({
     <div class="home-left">
       <div class="filter-bar">
         <div class="filter-group">${categoryFilters}</div>
+        <div class="sort-group" role="group" aria-label="文章排序">
+          <button class="sort-btn active" type="button" data-post-sort="date" aria-pressed="true">创建时间</button>
+          <button class="sort-btn" type="button" data-post-sort="updated" aria-pressed="false">更新时间</button>
+        </div>
       </div>
       <section class="post-list" aria-label="文章列表">
         <div class="section-heading">
@@ -246,7 +254,6 @@ const home = shell({
 const articlePages = posts.map(({ directoryName, metadata, markdown, hasImages }) => {
   const { html, tableOfContents, headingCount } = renderMarkdown(stripLeadingDocumentTitle(markdown));
   const categoryName = categoryNames[metadata.category] ?? metadata.category;
-  const displayDate = metadata.date.replaceAll("-", ".");
   const htmlPage = shell({
     title: `${metadata.title} | 嵌入式软件笔记`,
     description: metadata.summary,
@@ -259,7 +266,7 @@ const articlePages = posts.map(({ directoryName, metadata, markdown, hasImages }
       <article>
         <a class="back-link" href="../../">${icon("arrow")} 返回文章列表</a>
         <header class="article-header">
-          <div class="post-meta"><span>${escapeHtml(categoryName)}</span><time datetime="${metadata.date}">${displayDate}</time><span class="reading-time">${icon("clock")} 约 ${metadata.readingTime} 分钟</span></div>
+          <div class="post-meta"><span>${escapeHtml(categoryName)}</span>${renderUpdatedTime(metadata)}<span class="reading-time">${icon("clock")} 约 ${metadata.readingTime} 分钟</span></div>
           <h1>${escapeHtml(metadata.title)}</h1>
           <p>${escapeHtml(metadata.summary)}</p>
         </header>

@@ -60,11 +60,11 @@ button { font: inherit; }
 .home-layout { width: min(1180px, calc(100% - 48px)); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 56px; padding: 56px 0 100px; align-items: start; }
 
 /* Filter bar */
-.filter-bar { margin-bottom: 28px; }
-.filter-group { display: flex; flex-wrap: wrap; gap: 8px; }
-.filter-btn { padding: 5px 14px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color 140ms ease, color 140ms ease, background 140ms ease; }
-.filter-btn:hover { border-color: var(--green); color: var(--green); }
-.filter-btn.active { border-color: var(--green); background: var(--green); color: var(--paper); }
+.filter-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 28px; }
+.filter-group, .sort-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter-btn, .sort-btn { padding: 5px 14px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color 140ms ease, color 140ms ease, background 140ms ease; }
+.filter-btn:hover, .sort-btn:hover { border-color: var(--green); color: var(--green); }
+.filter-btn.active, .sort-btn.active { border-color: var(--green); background: var(--green); color: var(--paper); }
 
 /* Post list */
 .post-list { }

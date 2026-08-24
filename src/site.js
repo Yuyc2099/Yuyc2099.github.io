@@ -1,7 +1,46 @@
+// Relative timestamps
+const millisecondsPerDay = 24 * 60 * 60 * 1000;
+const relativeTimeFormatter = new Intl.RelativeTimeFormat("zh-CN", { numeric: "auto" });
+
+document.querySelectorAll("[data-relative-time]").forEach((element) => {
+  const [year, month, day] = element.dataset.relativeTime.split("-").map(Number);
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = Date.UTC(year, month - 1, day);
+  const days = Math.round((target - today) / millisecondsPerDay);
+  const unit = Math.abs(days) < 30 ? "day" : Math.abs(days) < 365 ? "month" : "year";
+  const divisor = unit === "day" ? 1 : unit === "month" ? 30 : 365;
+  element.textContent = relativeTimeFormatter.format(Math.round(days / divisor), unit);
+});
+
 // Category filter
 const filterBtns = [...document.querySelectorAll(".filter-btn")];
 const postCards = [...document.querySelectorAll("#post-cards .post-card")];
 const postCount = document.getElementById("post-count");
+const postSortButtons = [...document.querySelectorAll("[data-post-sort]")];
+const postSortLists = [...document.querySelectorAll("#post-cards, .all-posts-list")];
+const savedPostSort = localStorage.getItem("postSort") === "updated" ? "updated" : "date";
+
+const applyPostSort = (sort) => {
+  postSortLists.forEach((list) => {
+    [...list.children]
+      .sort((a, b) => b.dataset[sort].localeCompare(a.dataset[sort]))
+      .forEach((item) => list.append(item));
+  });
+  postSortButtons.forEach((button) => {
+    const active = button.dataset.postSort === sort;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+};
+
+applyPostSort(savedPostSort);
+postSortButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    localStorage.setItem("postSort", button.dataset.postSort);
+    applyPostSort(button.dataset.postSort);
+  });
+});
 
 if (filterBtns.length) {
   filterBtns.forEach((btn) => {
