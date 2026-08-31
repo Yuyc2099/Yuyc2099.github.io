@@ -1,0 +1,17 @@
+{
+  "title": "从协议校验错误到主频偏差",
+  "slug": "uart-clock-deviation-analysis",
+  "date": "2026-08-31",
+  "updated": "2026-08-31",
+  "summary": "从协议校验错误出发，通过原始接收、bit 时间、波特率补偿和 MCO 测量，定位 MCU 主频偏低导致的串口异常。",
+  "category": "debugging",
+  "tags": ["UART", "MCU", "波特率", "时钟", "示波器", "调试"],
+  "series": "debugging-notes",
+  "readingTime": 4,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:uart-clock-deviation-analysis:2026-08-31"
+  },
+  "draft": false
+}
