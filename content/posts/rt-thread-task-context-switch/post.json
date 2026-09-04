@@ -1,0 +1,17 @@
+{
+  "title": "RT-Thread 任务启动与任务切换原理",
+  "slug": "rt-thread-task-context-switch",
+  "date": "2026-08-25",
+  "updated": "2026-09-02",
+  "summary": "基于 Cortex-M4 RVDS 汇编实现，梳理 RT-Thread 首个任务启动、运行期任务切换以及 PendSV 上下文保存与恢复过程。",
+  "category": "kernel",
+  "tags": ["RT-Thread", "Cortex-M4", "PendSV", "任务调度", "上下文切换"],
+  "series": "rt-thread-kernel",
+  "readingTime": 8,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:rt-thread-task-context-switch:2026-08-25"
+  },
+  "draft": false
+}
