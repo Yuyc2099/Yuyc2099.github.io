@@ -1,0 +1,17 @@
+{
+  "title": "RT-Thread 就绪优先级位图与查找原理",
+  "slug": "rt-thread-ready-priority-bitmap",
+  "date": "2026-09-02",
+  "updated": "2026-09-02",
+  "summary": "解析 RT-Thread 如何用单级或两级位图记录就绪队列，并通过最低置位查找快速恢复最高就绪优先级。",
+  "category": "kernel",
+  "tags": ["RT-Thread", "任务调度", "优先级", "位图"],
+  "series": "rt-thread-kernel",
+  "readingTime": 6,
+  "attribution": {
+    "author": "Yuyc2099",
+    "sourceRepository": "https://github.com/Yuyc2099/Yuyc2099.github.io",
+    "sourceId": "yuyc2099:rt-thread-ready-priority-bitmap:2026-09-02"
+  },
+  "draft": false
+}
