@@ -1,8 +1,60 @@
 import { access, cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import hljs from "highlight.js/lib/core";
+import armasm from "highlight.js/lib/languages/armasm";
+import c from "highlight.js/lib/languages/c";
 import { marked } from "marked";
 
 const outputDir = new URL("../dist/", import.meta.url);
 const postsDir = new URL("../content/posts/", import.meta.url);
+
+const cWithIdentifiers = (languageApi) => {
+  const language = c(languageApi);
+  const reservedWords = Object.values(language.exports.keywords)
+    .flatMap((words) => Array.isArray(words) ? words : words.split(/\s+/))
+    .filter(Boolean)
+    .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const variablePattern = new RegExp(
+    `\\b(?!(?:${reservedWords.join("|")})\\b)(?![a-z_]\\w*_t\\b)[a-z_]\\w*\\b(?!\\s*\\()`,
+  );
+  const functionCallPattern = /\b(?!(?:if|for|while|switch|sizeof|alignof|_Alignof|typeof|typeof_unqual|_Generic)\b)[A-Za-z_]\w*(?=\s*\()/;
+  const ignoredScopes = new Set(["class", "comment", "meta", "number", "string", "title", "type"]);
+  const visitedModes = new Set();
+
+  const addIdentifierModes = (mode) => {
+    if (!mode || typeof mode !== "object" || visitedModes.has(mode)) return;
+    visitedModes.add(mode);
+
+    const scope = mode.scope ?? mode.className;
+    if (typeof scope === "string" && ignoredScopes.has(scope.split(".", 1)[0])) return;
+    if (!Array.isArray(mode.contains)) return;
+
+    mode.contains.forEach(addIdentifierModes);
+    mode.contains.unshift(
+      { scope: "title.function", match: functionCallPattern },
+      { scope: "variable", match: variablePattern },
+    );
+  };
+
+  addIdentifierModes(language);
+  return language;
+};
+
+hljs.registerLanguage("asm", armasm);
+hljs.registerLanguage("c", cWithIdentifiers);
+hljs.registerLanguage("calltree", () => ({
+  name: "Call Tree",
+  contains: [
+    { scope: "comment", begin: /\/\//, end: /$/ },
+    { scope: "meta", match: /\[[^\]\r\n]*[\u3400-\u9fff][^\]\r\n]*\]/ },
+    { scope: "symbol", match: /\bpendsv_exit\b/ },
+    { scope: "built_in", match: /\b(?:R(?:[0-9]|1[0-5])|MSP|PSP|PRIMASK|EXC_RETURN)\b/ },
+    { scope: "title.function", match: /\b[A-Za-z_]\w*(?=\()/ },
+    { scope: "keyword", match: /\b(?:if|else|goto|return|skip|get|pend|set_priority|enable_interrupt|disable_interrupt)\b/ },
+    { scope: "literal", match: /\b(?:RT_NULL|lowest)\b/ },
+    { scope: "number", match: /\b\d+\b/ },
+    { scope: "variable", match: /\b(?:level|highest_ready_priority|from|to|from_thread|to_thread|from_sp|to_sp|saved_primask|optional_fpu_context|rt_[A-Za-z0-9_]+)\b/ },
+  ],
+}));
 
 marked.use({
   gfm: true,
@@ -42,6 +94,37 @@ const exists = async (file) => {
 
 const stripLeadingDocumentTitle = (markdown) => markdown.replace(/^\uFEFF?#\s+.+\r?\n(?:\r?\n)?/, "");
 
+const expandSourceSnippets = async (markdown, articleDir) => {
+  const directivePattern = /\{%\s+source\s+file="([^"]+)"\s+lang="([^"]+)"\s+title="([^"]+)"\s+origin="([^"]+)"\s+%\}/g;
+  const matches = [...markdown.matchAll(directivePattern)];
+  let expanded = markdown;
+
+  for (const match of matches.reverse()) {
+    const [directive, file, language, title, origin] = match;
+    const isSnippet = file.startsWith("snippets/");
+    const isArticleSource = !file.includes("/") && /\.(c|h|s|asm)$/i.test(file);
+    if ((!isSnippet && !isArticleSource) || file.includes("..") || !/^[a-zA-Z0-9_./-]+$/.test(file)) {
+      throw new Error(`Invalid source snippet path: ${file}`);
+    }
+    if (!/^[a-zA-Z0-9_+-]+$/.test(language)) {
+      throw new Error(`Invalid source snippet language: ${language}`);
+    }
+
+    const source = (await readFile(new URL(`./${file}`, articleDir), "utf8")).trimEnd();
+    const replacement = `<details class="source-snippet">
+<summary>展开查看 ${escapeHtml(title)}（${escapeHtml(origin)}）</summary>
+
+\`\`\`${language}
+${source}
+\`\`\`
+
+</details>`;
+    expanded = `${expanded.slice(0, match.index)}${replacement}${expanded.slice(match.index + directive.length)}`;
+  }
+
+  return expanded;
+};
+
 const slugify = (value) => {
   const slug = value
     .toLowerCase()
@@ -56,6 +139,21 @@ const renderMarkdown = (markdown) => {
   const headings = [];
   const usedIds = new Map();
   const renderer = new marked.Renderer();
+  const highlightCalltree = (text) => {
+    const linkPattern = /\[([^\]\r\n]+)\]\((#[A-Za-z0-9_-]+|\/articles\/[A-Za-z0-9_./#-]+)\)/g;
+    let html = "";
+    let sourceIndex = 0;
+
+    for (const match of text.matchAll(linkPattern)) {
+      html += hljs.highlight(text.slice(sourceIndex, match.index), { language: "calltree" }).value;
+      const label = hljs.highlight(match[1], { language: "calltree" }).value;
+      html += `<a class="calltree-link" href="${escapeHtml(match[2])}">${label}</a>`;
+      sourceIndex = match.index + match[0].length;
+    }
+
+    html += hljs.highlight(text.slice(sourceIndex), { language: "calltree" }).value;
+    return html;
+  };
 
   renderer.heading = ({ tokens, depth }) => {
     const text = renderer.parser.parseInline(tokens);
@@ -66,6 +164,17 @@ const renderMarkdown = (markdown) => {
     const id = count ? `${baseId}-${count + 1}` : baseId;
     if (depth >= 2 && depth <= 3) headings.push({ depth, id, text: plainText });
     return `<h${depth} id="${escapeHtml(id)}"><a class="heading-anchor" href="#${escapeHtml(id)}" aria-label="链接到本节">${text}</a></h${depth}>`;
+  };
+
+  renderer.code = ({ text, lang }) => {
+    const language = (lang ?? "").trim().split(/\s+/)[0];
+    const code = language === "calltree"
+      ? highlightCalltree(text)
+      : language && hljs.getLanguage(language)
+        ? hljs.highlight(text, { language }).value
+        : escapeHtml(text);
+    const languageClass = language ? ` language-${escapeHtml(language)}` : "";
+    return `<pre><code class="hljs${languageClass}">${code}</code></pre>\n`;
   };
 
   return {
@@ -129,16 +238,23 @@ const posts = (
     directoryEntries
       .filter((entry) => entry.isDirectory())
       .map(async (entry) => {
-        const sourceFile = new URL(`./${entry.name}/${entry.name}.md`, postsDir);
-        const metadataFile = new URL(`./${entry.name}/post.json`, postsDir);
-        const imagesDir = new URL(`./${entry.name}/images/`, postsDir);
-        const markdown = await readFile(sourceFile, "utf8");
+        const articleDir = new URL(`./${entry.name}/`, postsDir);
+        const sourceFile = new URL(`./${entry.name}.md`, articleDir);
+        const metadataFile = new URL("./post.json", articleDir);
+        const imagesDir = new URL("./images/", articleDir);
+        const sourceMarkdown = await readFile(sourceFile, "utf8");
+        const markdown = await expandSourceSnippets(sourceMarkdown, articleDir);
         const metadata = JSON.parse(await readFile(metadataFile, "utf8"));
-        const firstLine = markdown.replace(/^\uFEFF/, "").split(/\r?\n/, 1)[0];
+        const firstLine = sourceMarkdown.replace(/^\uFEFF/, "").split(/\r?\n/, 1)[0];
         if (firstLine !== `# ${metadata.title}`) {
           throw new Error(`${entry.name}: Markdown H1 must match post.json title.`);
         }
-        return { directoryName: entry.name, metadata, markdown, hasImages: await exists(imagesDir) };
+        return {
+          directoryName: entry.name,
+          metadata,
+          markdown,
+          hasImages: await exists(imagesDir),
+        };
       }),
   )
 )

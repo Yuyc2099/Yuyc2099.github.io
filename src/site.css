@@ -146,6 +146,18 @@ button { font: inherit; }
 .article-content code { padding: 0.15em 0.38em; border-radius: 3px; background: color-mix(in srgb, var(--green) 10%, transparent); color: var(--green); font: 0.86em/1.5 Consolas, "SFMono-Regular", monospace; }
 .article-content pre { max-width: 100%; margin: 26px 0; padding: 22px; overflow-x: auto; border: 1px solid #34403b; border-radius: 4px; background: var(--code); color: var(--code-ink); font-size: 14px; line-height: 1.65; }
 .article-content pre code { padding: 0; background: transparent; color: inherit; }
+.article-content .hljs-comment, .article-content .hljs-quote { color: #8b949e; font-style: italic; }
+.article-content .hljs-keyword, .article-content .hljs-selector-tag, .article-content .hljs-literal { color: #ff7b72; }
+.article-content .hljs-type, .article-content .hljs-built_in { color: #79c0ff; }
+.article-content .hljs-title, .article-content .hljs-section { color: #d2a8ff; }
+.article-content .hljs-string, .article-content .hljs-attr { color: #a5d6ff; }
+.article-content .hljs-number, .article-content .hljs-symbol, .article-content .hljs-bullet { color: #79c0ff; }
+.article-content .hljs-meta, .article-content .hljs-meta .hljs-keyword { color: #ffa657; }
+.article-content .hljs-variable { color: #ffa657; }
+.article-content .hljs-params { color: #e9eee9; }
+.article-content pre .calltree-link { color: #d2a8ff; text-decoration-color: currentColor; text-underline-offset: 3px; }
+.article-content pre .calltree-link:hover { background: rgba(210, 168, 255, 0.12); }
+.article-content .section-anchor { scroll-margin-top: 28px; }
 .article-content table { display: block; width: 100%; margin: 26px 0 32px; overflow-x: auto; border-collapse: collapse; font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 14px; }
 .article-content th, .article-content td { min-width: 120px; padding: 11px 14px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
 .article-content th { background: var(--surface); color: var(--green); }
